@@ -1,0 +1,10 @@
+{
+"name": "Living Worlds Dev",
+"image": "mcr.microsoft.com/devcontainers/javascript-node:0-18",
+"features": {
+"ghcr.io/devcontainers/features/python": "latest"
+},
+"forwardPorts": [3000, 3001],
+"postCreateCommand": "bash .devcontainer/postCreate.sh",
+"remoteUser": "vscode"
+}

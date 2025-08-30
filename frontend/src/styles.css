@@ -1,0 +1,8 @@
+
+body, html, #root { height: 100%; margin: 0; font-family: Arial, sans-serif; }
+.app { display:flex; height:100vh; }
+.canvas-wrap { flex: 1; }
+.ui { width: 360px; padding: 16px; background: #111827; color: #fff; box-shadow: -8px 0 24px rgba(0,0,0,0.4); }
+.npc-card { margin-top: 12px; padding: 8px; background: rgba(255,255,255,0.04); border-radius:6px; min-height:80px; }
+.dialogue-box { margin-top:8px; background: rgba(0,0,0,0.2); padding:8px; border-radius:4px; min-height:40px; }
+

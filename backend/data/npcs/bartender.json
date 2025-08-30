@@ -1,0 +1,9 @@
+{
+  "id": "bartender",
+  "name": "Lysa",
+  "role": "Innkeeper",
+  "personality": "Gossipy, warm, practical",
+  "goals": ["Keep tavern safe", "Make a living"],
+  "traits": ["Gossiper"],
+  "knowledge": ["Knows rumor about the lost key", "Remembers player paid tab last visit"]
+}

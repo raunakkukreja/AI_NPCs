@@ -1,0 +1,11 @@
+{
+  "time": "evening",
+  "weather": "rainy",
+  "player": {
+    "name": "Arin",
+    "reputation": "trusted",
+    "inventory": []
+  },
+  "location": "tavern",
+  "activeQuests": ["Find the Lost Key"]
+}
