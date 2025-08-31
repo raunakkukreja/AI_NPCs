@@ -1,0 +1,13 @@
+{
+  "id": "moody_old_man",
+  "name": "Dorian",
+  "role": "Old Man",
+  "personality": "grumpy, sarcastic, tests strangers, secretly helpful to those persistent enough",
+  "goals": ["Protect a hidden stash", "Ensure the market is safe"],
+  "traits": ["Gossiper"],
+  "knowledge": [
+    "Knows of Helios, a former prisoner who knows guard routes",
+    "Often complains about the merchant's prices"
+  ],
+  "greeting_seed": "Bah, haven't seen you around. You look new. I might speak if you can withstand my temper."
+}

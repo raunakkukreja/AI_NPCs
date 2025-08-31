@@ -6,3 +6,87 @@ body, html, #root { height: 100%; margin: 0; font-family: Arial, sans-serif; }
 .npc-card { margin-top: 12px; padding: 8px; background: rgba(255,255,255,0.04); border-radius:6px; min-height:80px; }
 .dialogue-box { margin-top:8px; background: rgba(0,0,0,0.2); padding:8px; border-radius:4px; min-height:40px; }
 
+/* Tutorial popup */
+.tutorial {
+  position: absolute;
+  z-index: 40;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 36px;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 8px;
+  width: 420px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+
+/* UI panel on the right */
+.ui-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 340px;
+  height: 100vh;
+  background: #0f1724;
+  color: #fff;
+  padding: 12px;
+  box-shadow: -8px 0 24px rgba(0,0,0,0.6);
+  z-index: 20;
+}
+
+/* Chatbox */
+.chatbox {
+  position: absolute;
+  z-index: 50;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 28px;
+  width: 560px;
+  background: rgba(10, 10, 12, 0.95);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+}
+
+.chatbox-header {
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  margin-bottom: 8px;
+}
+
+.chatbox-history {
+  min-height: 160px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.02);
+  margin-bottom: 8px;
+}
+
+.msg { margin-bottom: 8px; display:flex; }
+.msg-player { justify-content: flex-end; }
+.msg .msg-text { padding:8px 12px; border-radius: 8px; max-width: 70%; }
+.msg-player .msg-text { background: linear-gradient(90deg,#1e3a8a,#3b82f6); color: white; }
+.msg-npc .msg-text { background: rgba(255,255,255,0.06); color: #fff; }
+
+.chatbox-input { display:flex; gap:8px; }
+.chatbox-input input { flex:1; padding: 8px 10px; border-radius: 6px; border: none; background: rgba(255,255,255,0.04); color:#fff; }
+.chatbox-input button { padding:8px 12px; border-radius:6px; background:#0369a1; border:none; color:#fff; }
+
+/* small close button */
+.close-btn {
+  background: transparent;
+  color: #ddd;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* ensure canvas takes full area */
+.canvas-wrap { width:100%; height:100vh; }
