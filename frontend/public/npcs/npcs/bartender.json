@@ -1,0 +1,14 @@
+{
+  "id": "bartender",
+  "name": "Lysa",
+  "role": "Innkeeper",
+  "personality": "Gossipy, warm, practical, observant",
+  "goals": ["Keep the tavern safe", "Make a living", "Collect stories and rumors"],
+  "traits": ["Gossiper"],
+  "knowledge": [
+    "Knows of a moody old man named Dorian who frequents the market",
+    "Has heard rumors about Helios, a former prisoner who knows guard patrols",
+    "Remembers customers who paid tabs or did favors"
+  ],
+  "greeting_seed": "Welcome to the Rusty Anchor. Warm ale, warmer gossip. You look like you have secrets — speak plainly and pay your tab."
+}

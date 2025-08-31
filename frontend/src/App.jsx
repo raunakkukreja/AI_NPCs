@@ -1,6 +1,6 @@
 // frontend/src/App.jsx
 import React, { useState, useEffect } from "react";
-import WorldView from "./components/WorldView";
+import World2D from "./components/World2D";
 import ChatBox from "./components/ChatBox";
 import NPCCard from "./components/NPCCard";
 import { interact } from "./api";
@@ -10,6 +10,7 @@ export default function App() {
   const [currentNPC, setCurrentNPC] = useState(null);
   const [chatVisible, setChatVisible] = useState(false);
   const [lastDialogue, setLastDialogue] = useState("");
+  const [panelSubject, setPanelSubject] = useState(null);
 
   // listen for small "distance hint" events from the world (optional)
   useEffect(() => {
@@ -22,27 +23,38 @@ export default function App() {
     return () => window.removeEventListener("game-interact-failed", onFail);
   }, []);
 
-// inside App.jsx replace existing functions:
+  // replace handleTalkRequest with:
+  const handleTalkRequest = async (idOrObj) => {
+    console.log("[APP] talk request for", idOrObj);
+    if (!idOrObj) return;
+    if (typeof idOrObj === "string") {
+      setCurrentNPC({ id: idOrObj, name: idOrObj });
+      setChatVisible(true);
+      setLastDialogue("");
+      setPanelSubject({ type: 'npc', id: idOrObj });
+    } else if (typeof idOrObj === "object") {
+      if (idOrObj.type === 'area') {
+        setPanelSubject({ type: 'area', id: idOrObj.id });
+      } else if (idOrObj.type === 'npc') {
+        setCurrentNPC({ id: idOrObj.id, name: idOrObj.id });
+        setChatVisible(true);
+        setPanelSubject({ type: 'npc', id: idOrObj.id });
+      }
+    }
+  };
 
-const handleTalkRequest = async (npcId) => {
-  console.log("[APP] talk request for", npcId);
-  setCurrentNPC({ id: npcId, name: npcId });
-  setChatVisible(true);
-  setLastDialogue("");
-};
-
-const handleSendToNPC = async (text) => {
-  if (!currentNPC) throw new Error("No NPC selected");
-  console.log("[APP] sending to", currentNPC.id, "text:", text);
-  try {
-    const res = await interact(currentNPC.id, text);
-    console.log("[APP] received response:", res);
-    return res;
-  } catch (err) {
-    console.error("[APP] interact error:", err);
-    throw err;
-  }
-};
+  const handleSendToNPC = async (text) => {
+    if (!currentNPC) throw new Error("No NPC selected");
+    console.log("[APP] sending to", currentNPC.id, "text:", text);
+    try {
+      const res = await interact(currentNPC.id, text);
+      console.log("[APP] received response:", res);
+      return res;
+    } catch (err) {
+      console.error("[APP] interact error:", err);
+      throw err;
+    }
+  };
 
   return (
     <div className="app">
@@ -56,12 +68,12 @@ const handleSendToNPC = async (text) => {
         </div>
       )}
 
-      <WorldView onTalkRequest={handleTalkRequest} />
+      <World2D onTalkRequest={handleTalkRequest} />
 
       <div className="ui-panel">
         <h2>Living Worlds — Prototype</h2>
         <p>{lastDialogue}</p>
-        <NPCCard npcId={currentNPC ? currentNPC.id : null} dialogue={lastDialogue} />
+        <NPCCard subject={panelSubject} />
       </div>
 
       {chatVisible && currentNPC && (

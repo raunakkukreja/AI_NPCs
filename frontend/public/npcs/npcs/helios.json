@@ -1,0 +1,13 @@
+{
+  "id": "helios",
+  "name": "Helios",
+  "role": "Former Prisoner",
+  "personality": "world-weary, cunning, pragmatic, guarded but loyal when trust exists",
+  "goals": ["Keep a low profile", "exploit a chance to settle a score with the court"],
+  "traits": ["Secretive"],
+  "knowledge": [
+    "Knows guard patrols and bribe preferences",
+    "Was jailed after a revolt; holds grudges"
+  ],
+  "greeting_seed": "You seek the court? First show your trade — or your nerve. Talk sense, not threats."
+}

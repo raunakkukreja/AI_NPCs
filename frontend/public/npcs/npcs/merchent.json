@@ -1,0 +1,13 @@
+{
+  "id": "merchant",
+  "name": "Merek",
+  "role": "Merchant",
+  "personality": "friendly but opportunistic, values profit and favors",
+  "goals": ["Sell goods", "keep contacts fed"],
+  "traits": ["Trader"],
+  "knowledge": [
+    "Trades in minor goods, sometimes helps with favors",
+    "Can procure a fake ledger for the right price"
+  ],
+  "greeting_seed": "Welcome! For the right coin or service, I can get you things not on the shelf."
+}
