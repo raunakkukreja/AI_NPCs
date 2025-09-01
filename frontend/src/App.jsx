@@ -68,8 +68,12 @@ export default function App() {
         </div>
       )}
 
-      <World2D onTalkRequest={handleTalkRequest} />
+      {/* Map area */}
+      <div className="canvas-wrap">
+        <World2D onTalkRequest={handleTalkRequest} />
+      </div>
 
+      {/* Info panel */}
       <div className="ui-panel">
         <h2>Living Worlds — Prototype</h2>
         <p>{lastDialogue}</p>

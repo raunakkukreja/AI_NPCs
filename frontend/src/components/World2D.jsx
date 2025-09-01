@@ -34,7 +34,6 @@ export default function World2D({ onTalkRequest }) {
   const containerRef = useRef(null);
   const [entities, setEntities] = useState(() => INITIAL_CHARACTERS);
   const [playerIdx] = useState(0);
-  const [camera, setCamera] = useState({ x: 0, y: 0 });
   const playerSpeed = 220;
   const keys = useRef({});
   const lastTimeRef = useRef(performance.now());
@@ -135,30 +134,27 @@ export default function World2D({ onTalkRequest }) {
     return ()=>{ window.removeEventListener("keydown", onKeyDown); window.removeEventListener("keyup", onKeyUp); };
   }, [entities, playerIdx, onTalkRequest]);
 
+  // Scroll the container so player is centered (like page scroll)
   useEffect(() => {
-    const id = setInterval(()=> {
+    const id = setInterval(() => {
       const player = entities[playerIdx];
-      if (!player) return;
       const container = containerRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const panel = document.querySelector(".ui-panel");
-      const panelWidth = panel ? panel.getBoundingClientRect().width : 0;
-      const availableWidth = Math.max(200, rect.width - panelWidth);
-      const halfW = availableWidth / 2;
-      const halfH = rect.height / 2;
-      const maxX = Math.max(0, WORLD_W - availableWidth);
-      const maxY = Math.max(0, WORLD_H - rect.height);
-      const camX = Math.min(Math.max(0, player.pos[0] - halfW), maxX);
-      const camY = Math.min(Math.max(0, player.pos[1] - halfH), maxY);
-      setCamera({ x: camX, y: camY });
+      if (!player || !container) return;
+      const px = Math.round(player.pos[0] - container.offsetWidth / 2);
+      const py = Math.round(player.pos[1] - container.offsetHeight / 2);
+      container.scrollLeft = Math.max(0, Math.min(px, WORLD_W - container.offsetWidth));
+      container.scrollTop = Math.max(0, Math.min(py, WORLD_H - container.offsetHeight));
     }, 60);
-    return ()=>clearInterval(id);
+    return () => clearInterval(id);
   }, [entities, playerIdx]);
 
+  // compute nearest & screen projection using container scroll offsets
   useEffect(()=> {
     const p = entities[playerIdx]?.pos;
     if (!p) return;
+    const container = containerRef.current;
+    const scrollX = container ? container.scrollLeft : 0;
+    const scrollY = container ? container.scrollTop : 0;
     let best = null, bestD = Infinity;
     entities.forEach(ent => {
       if (ent.type !== 'npc') return;
@@ -166,14 +162,11 @@ export default function World2D({ onTalkRequest }) {
       if (d < bestD) { bestD = d; best = ent; }
     });
     if (best) {
-      const container = containerRef.current;
-      const screenX = best.pos[0] - camera.x;
-      const screenY = best.pos[1] - camera.y;
+      const screenX = best.pos[0] - scrollX;
+      const screenY = best.pos[1] - scrollY;
       setNearest({ id: best.id, dist: bestD, screen: [screenX, screenY] });
     } else setNearest(null);
-  }, [entities, camera, playerIdx]);
-
-  const worldToScreen = (pos) => [ pos[0] - camera.x, pos[1] - camera.y ];
+  }, [entities, playerIdx]);
 
   const onNpcClick = (id) => {
     const ent = entities.find(e=>e.id===id);
@@ -195,68 +188,82 @@ export default function World2D({ onTalkRequest }) {
   };
 
   return (
-    <div className="world2d-root" style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
-      <div ref={containerRef} className="world2d-viewport">
-        <div className="world2d-inner" style={{
-          width: WORLD_W, height: WORLD_H,
-          transform: `translate(${-camera.x}px, ${-camera.y}px)`,
-          position: 'absolute', left:0, top:0
-        }}>
+    <div ref={containerRef} className="world2d-viewport" style={{ width: "100%", height: "100vh", overflow: "auto", position: "relative" }}>
+      <div className="world2d-inner" style={{
+        width: WORLD_W, height: WORLD_H,
+        position: 'relative', left:0, top:0
+      }}>
+        {/* World background image */}
+        <img
+          src="assets/village_layout.png"
+          alt="Village Map"
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: WORLD_W,
+            height: WORLD_H,
+            objectFit: "cover",
+            zIndex: 0,
+            pointerEvents: "none"
+          }}
+        />
 
-          {/* Render area rectangles */}
-          {AREAS.map(a => (
-            <div key={a.id}
-                 style={{
-                   position: 'absolute',
-                   left: a.x,
-                   top: a.y,
-                   width: a.w,
-                   height: a.h,
-                   borderRadius: 6,
-                   background: 'rgba(255,255,255,0.02)',
-                   border: '1px dashed rgba(255,255,255,0.03)',
-                   zIndex: 10
-                 }}>
-              <div style={{position:'absolute', left:6, top:6, color:'#ddd', fontSize:12}}>{a.label}</div>
+        {/* Render area rectangles */}
+        {AREAS.map(a => (
+          <div key={a.id}
+               style={{
+                 position: 'absolute',
+                 left: a.x,
+                 top: a.y,
+                 width: a.w,
+                 height: a.h,
+                 borderRadius: 6,
+                 background: 'rgba(255,255,255,0.02)',
+                 border: '1px dashed rgba(255,255,255,0.03)',
+                 zIndex: 10
+               }}>
+            <div style={{position:'absolute', left:6, top:6, color:'#ddd', fontSize:12}}>{a.label}</div>
+          </div>
+        ))}
+
+        {/* NPCs + Player */}
+        {entities.map(ent => {
+          const isPlayer = ent.type === 'player';
+          const glow = !isPlayer && nearest && nearest.id === ent.id && nearest.dist <= 90;
+          const size = isPlayer ? 36 : 34;
+          const initials = ent.name ? ent.name.split(" ").map(s=>s[0]).slice(0,2).join("") : ent.id.slice(0,2);
+          return (
+            <div
+              key={ent.id}
+              onClick={() => !isPlayer && onNpcClick(ent.id)}
+              title={ent.name}
+              className={`world-entity ${isPlayer ? 'player-entity' : 'npc-entity'}`}
+              style={{
+                left: ent.pos[0] - size/2,
+                top: ent.pos[1] - size/2,
+                width: size, height: size,
+                background: ent.color || (isPlayer ? "#9ae6b4" : "#ccc"),
+                boxShadow: glow ? "0 0 18px 6px rgba(255,215,0,0.25)" : "none",
+                border: isPlayer ? "2px solid #0f1724" : "1px solid rgba(0,0,0,0.2)",
+                position: "absolute"
+              }}
+            >
+              <div style={{fontSize:12, fontWeight:700}}>{initials}</div>
             </div>
-          ))}
-
-          {/* NPCs + Player */}
-          {entities.map(ent => {
-            const screen = worldToScreen(ent.pos);
-            const isPlayer = ent.type === 'player';
-            const glow = !isPlayer && nearest && nearest.id === ent.id && nearest.dist <= 90;
-            const size = isPlayer ? 36 : 34;
-            const initials = ent.name ? ent.name.split(" ").map(s=>s[0]).slice(0,2).join("") : ent.id.slice(0,2);
-            return (
-              <div
-                key={ent.id}
-                onClick={() => !isPlayer && onNpcClick(ent.id)}
-                title={ent.name}
-                className={`world-entity ${isPlayer ? 'player-entity' : 'npc-entity'}`}
-                style={{
-                  left: screen[0] - size/2,
-                  top: screen[1] - size/2,
-                  width: size, height: size,
-                  background: ent.color || (isPlayer ? "#9ae6b4" : "#ccc"),
-                  boxShadow: glow ? "0 0 18px 6px rgba(255,215,0,0.25)" : "none",
-                  border: isPlayer ? "2px solid #0f1724" : "1px solid rgba(0,0,0,0.2)"
-                }}
-              >
-                <div style={{fontSize:12, fontWeight:700}}>{initials}</div>
-              </div>
-            );
-          })}
-        </div>
+          );
+        })}
       </div>
 
+      {/* hint */}
       {nearest && nearest.dist <= 90 && (
-        <div className="world-hint" style={{ left: (nearest.screen[0]) + 'px', top: (nearest.screen[1]-50)+'px' }}>
+        <div className="world-hint" style={{ position: 'fixed', left: (nearest.screen[0] - 10) + 'px', top: (nearest.screen[1] - 50) + 'px', zIndex: 200 }}>
           Press <strong>X</strong> to interact
         </div>
       )}
       {hintVisible && <div className="world-hint-temp">Move closer to interact</div>}
 
+      {/* minimap */}
       <div className="minimap" style={{ width: mapSize.w, height: mapSize.h }}>
         <svg width="100%" height="100%" viewBox={`0 0 ${WORLD_W} ${WORLD_H}`}>
           <rect x="0" y="0" width={WORLD_W} height={WORLD_H} fill="#071022" opacity="0.4" />

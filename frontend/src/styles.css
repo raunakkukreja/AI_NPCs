@@ -1,9 +1,38 @@
 body, html, #root { height: 100%; margin: 0; font-family: Arial, sans-serif; }
-.app { display:flex; height:100vh; }
-.canvas-wrap { flex: 1; }
-.ui { width: 360px; padding: 16px; background: #111827; color: #fff; box-shadow: -8px 0 24px rgba(0,0,0,0.4); }
-.npc-card { margin-top: 12px; padding: 8px; background: rgba(255,255,255,0.04); border-radius:6px; min-height:80px; }
-.dialogue-box { margin-top:8px; background: rgba(0,0,0,0.2); padding:8px; border-radius:4px; min-height:40px; }
+.app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+.canvas-wrap {
+  flex: 1;
+  height: 100vh;
+  overflow: auto;
+  position: relative;
+  background: linear-gradient(#0b1220,#132032);
+}
+.ui {
+  width: 360px;
+  padding: 16px;
+  background: #111827;
+  color: #fff;
+  box-shadow: -8px 0 24px rgba(0,0,0,0.4);
+}
+.npc-card {
+  margin-top: 12px;
+  padding: 8px;
+  background: rgba(255,255,255,0.04);
+  border-radius:6px;
+  min-height:80px;
+}
+.dialogue-box {
+  margin-top:8px;
+  background: rgba(0,0,0,0.2);
+  padding:8px;
+  border-radius:4px;
+  min-height:40px;
+}
 
 /* Tutorial popup */
 .tutorial {
@@ -22,9 +51,6 @@ body, html, #root { height: 100%; margin: 0; font-family: Arial, sans-serif; }
 
 /* UI panel on the right */
 .ui-panel {
-  position: absolute;
-  right: 0;
-  top: 0;
   width: 340px;
   height: 100vh;
   background: #0f1724;
@@ -32,6 +58,7 @@ body, html, #root { height: 100%; margin: 0; font-family: Arial, sans-serif; }
   padding: 12px;
   box-shadow: -8px 0 24px rgba(0,0,0,0.6);
   z-index: 20;
+  position: relative;
 }
 
 /* Chatbox */
@@ -148,5 +175,4 @@ body, html, #root { height: 100%; margin: 0; font-family: Arial, sans-serif; }
   border-radius: 8px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.6);
   border: 1px solid rgba(255,255,255,0.03);
-}
 }
