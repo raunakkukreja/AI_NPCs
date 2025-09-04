@@ -1,0 +1,13 @@
+{
+  "id": "guard",
+  "name": "Erebus",
+  "role": "Royal Guard",
+  "personality": "jaded professional, outwardly loyal, corruptible but with standards, pragmatic, weary, formal speech that can become informal, follows procedures",
+  "goals": ["Protect the gate", "maintain honor"],
+  "traits": ["Skeptic"],
+  "knowledge": [
+    "Knows the official guest lists",
+    "Has a known preference for a favored bribe (a coin from a specific mint)"
+  ],
+  "greeting_seed": "Halt. State your business. Papers, please — or keep walking."
+}

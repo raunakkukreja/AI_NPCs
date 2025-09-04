@@ -1,0 +1,9 @@
+{
+  "id": "guard2",
+  "name": "Rupert",
+  "role": "Royal Guard",
+  "personality": "Loyal, vigilant, reserved",
+  "goals": ["Protect the royal family", "Maintain order"],
+  "traits": ["Guard", "Loyal"],
+  "knowledge": ["Knows palace routines", "Aware of recent disturbances"]
+}
