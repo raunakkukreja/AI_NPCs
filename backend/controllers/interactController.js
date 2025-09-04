@@ -16,6 +16,29 @@ function loadNpcProfile(id) {
   }
 }
 
+function saveNpcProfile(id, profile) {
+  try {
+    fs.writeFileSync(path.join(NPC_DIR, `${id}.json`), JSON.stringify(profile, null, 2), 'utf8');
+  } catch (e) {
+    console.warn(`Failed to save NPC profile ${id}:`, e.message);
+  }
+}
+
+function updateNpcMemory(npcId, userText, assistantText) {
+  const npc = loadNpcProfile(npcId) || { name: npcId, personality: "", traits: [] };
+  if (!npc.memory) npc.memory = [];
+  
+  npc.memory.push({ role: 'user', content: userText });
+  npc.memory.push({ role: 'assistant', content: assistantText });
+  
+  // Keep only last 4 messages (2 user + 2 assistant)
+  if (npc.memory.length > 4) {
+    npc.memory = npc.memory.slice(-4);
+  }
+  
+  saveNpcProfile(npcId, npc);
+}
+
 function loadGameState() {
   try {
     return JSON.parse(fs.readFileSync(GAMESTATE, 'utf8'));
@@ -64,17 +87,22 @@ async function handleInteract(req, res) {
 
   const messages = [
     { role: 'system', content: systemContent },
-    { role: 'system', content: `Context: ${context}` },
-    { role: 'user', content: playerText }
+    { role: 'system', content: `Context: ${context}` }
   ];
+  
+  // Add memory (last 2 conversations)
+  if (npc.memory && npc.memory.length > 0) {
+    messages.push(...npc.memory);
+  }
+  
+  messages.push({ role: 'user', content: playerText });
 
   try {
     const result = await callLocalModel(messages, { max_tokens: 200, temperature: 0.35 });
     const npcReply = (result && result.text) ? result.text.trim() : " ... ";
 
-    // Optionally save a short memory snippet
-    const memorySnippet = `Player said: "${playerText}" -> NPC replied: "${npcReply}"`;
-    saveMemorySnippet(npcId, memorySnippet);
+    // Update NPC memory with last 2 exchanges
+    updateNpcMemory(npcId, playerText, npcReply);
 
     return res.json({ ok: true, dialogue: npcReply });
   } catch (err) {
