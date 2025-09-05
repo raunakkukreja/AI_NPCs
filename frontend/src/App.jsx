@@ -12,6 +12,7 @@ export default function App() {
   const [lastDialogue, setLastDialogue] = useState("");
   const [panelSubject, setPanelSubject] = useState(null);
   const [pausedNPCId, setPausedNPCId] = useState(null);
+  const [playerInteractions, setPlayerInteractions] = useState([]);
 
   // listen for small "distance hint" events from the world (optional)
   useEffect(() => {
@@ -52,6 +53,17 @@ export default function App() {
     try {
       const res = await interact(currentNPC.id, text);
       console.log("[APP] received response:", res);
+      
+      // Add to player interactions for gossip network
+      const interaction = {
+        npcId: currentNPC.id,
+        playerMessage: text,
+        npcResponse: res.dialogue,
+        summary: `Player talked about: ${text.substring(0, 50)}...`,
+        timestamp: Date.now()
+      };
+      setPlayerInteractions(prev => [...prev, interaction]);
+      
       return res;
     } catch (err) {
       console.error("[APP] interact error:", err);
@@ -73,7 +85,7 @@ export default function App() {
 
       {/* Map area */}
       <div className="canvas-wrap">
-        <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} />
+        <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} playerInteractions={playerInteractions} />
       </div>
 
       {/* Info panel */}

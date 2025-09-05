@@ -3,11 +3,18 @@
   "name": "Helios",
   "role": "Former Prisoner",
   "personality": "cunning, charming but wary, street-smart, anti-authority, observant, calculates every angle, speaks metaphorically, information broker",
-  "goals": ["Keep a low profile", "exploit a chance to settle a score with the court"],
-  "traits": ["Secretive"],
+  "goals": [
+    "Keep a low profile",
+    "exploit a chance to settle a score with the court"
+  ],
+  "traits": [
+    "Secretive"
+  ],
   "knowledge": [
     "Knows guard patrols and bribe preferences",
     "Was jailed after a revolt; holds grudges"
   ],
-  "greeting_seed": "You seek the court? First show your trade — or your nerve. Talk sense, not threats."
+  "greeting_seed": "You seek the court? First show your trade — or your nerve. Talk sense, not threats.",
+  "memory": [],
+  "gossip": []
 }

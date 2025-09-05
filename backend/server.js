@@ -2,13 +2,17 @@
 require('dotenv').config(); // optional - install dotenv if you want to use .env files
 const express = require('express');
 const cors = require('cors');
-const { handleInteract } = require('./controllers/interactController');
+const { handleInteract, handleInteractStream, handleGetGossip, handleGossipShare, handleReset } = require('./controllers/interactController');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 app.post('/api/npc/:id/interact', handleInteract);
+app.post('/api/npc/:id/interact/stream', handleInteractStream);
+app.get('/api/gossip', handleGetGossip);
+app.post('/api/gossip/share', handleGossipShare);
+app.post('/api/reset', handleReset);
 
 // simple health route
 app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));

@@ -4,13 +4,15 @@ import os
 import sys
 import time
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from llama_cpp import Llama
+import json
 
 # --- Configuration ---
 MODEL_PATH = os.environ.get("MODEL_PATH",r"C:\Users\kvidi\.cache\huggingface\hub\models--QuantFactory--Meta-Llama-3-8B-Instruct-GGUF\snapshots\86e0c07efa3f1b6f06ea13e31b1e930dce865ae4\Meta-Llama-3-8B-Instruct.Q4_K_M.gguf")  # e.g. "C:/Users/RAUNAK/.cache/huggingface/.../Meta-Llama-3-8B-Instruct.Q4_K_M.gguf"
-API_KEY = os.environ.get("MODEL_API_KEY","12345678")  # optional; set to protect the local endpoint
+API_KEY = os.environ.get("MODEL_API_KEY")  # optional; set to protect the local endpoint
 PORT = int(os.environ.get("MODEL_PORT", "8000"))
 
 if not MODEL_PATH:
@@ -44,31 +46,50 @@ def check_api_key(req: Request):
         if key != API_KEY:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
+@app.post("/chat/stream")
+async def chat_stream(req: Request, body: ChatRequest):
+    check_api_key(req)
+    messages_for_model = [{"role": m.role, "content": m.content} for m in body.messages]
+    
+    def generate_stream():
+        try:
+            stream = llm.create_chat_completion(
+                messages=messages_for_model,
+                max_tokens=body.max_tokens,
+                temperature=body.temperature,
+                stream=True
+            )
+            
+            for chunk in stream:
+                if isinstance(chunk, dict) and "choices" in chunk:
+                    delta = chunk["choices"][0].get("delta", {})
+                    if "content" in delta:
+                        data = {"choices": [{"delta": {"content": delta["content"]}}]}
+                        yield f"data: {json.dumps(data)}\n\n"
+            
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            error_data = {"error": str(e)}
+            yield f"data: {json.dumps(error_data)}\n\n"
+    
+    return StreamingResponse(generate_stream(), media_type="text/plain")
+
 @app.post("/chat")
 async def chat(req: Request, body: ChatRequest):
-    # optional API key check
     check_api_key(req)
-
-    # Build messages into a single prompt that llama_cpp expects.
-    # Many local chat wrappers expect messages in the OpenAI style; Llama's create_chat_completion accepts messages in same shape.
     messages_for_model = [{"role": m.role, "content": m.content} for m in body.messages]
 
-    # convert to native python list (llama.create_chat_completion supports messages param)
     try:
         resp = llm.create_chat_completion(
             messages=messages_for_model,
             max_tokens=body.max_tokens,
             temperature=body.temperature,
-            stream=False  # simple non-streaming for prototype
+            stream=False
         )
-        # resp structure: choices -> [ { message: { role: "assistant", content: "..." } } ]
         content = ""
-        # handle shape differences
         if isinstance(resp, dict):
-            # common layout
             choices = resp.get("choices", [])
             if choices and isinstance(choices, list):
-                # join content if partials
                 parts = []
                 for ch in choices:
                     msg = ch.get("message") or ch.get("delta") or {}
@@ -78,10 +99,8 @@ async def chat(req: Request, body: ChatRequest):
                 if parts:
                     content = "".join(parts)
                 else:
-                    # fallback to 'text' or 'output'
                     content = resp.get("text") or resp.get("output") or ""
         else:
-            # fallback
             content = str(resp)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Model error: {e}")

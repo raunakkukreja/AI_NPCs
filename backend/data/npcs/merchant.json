@@ -16,5 +16,21 @@
   ],
   "greeting_seed": "Welcome! For the right coin or service, I can get you things not on the shelf.",
   "memory": [
+    {
+      "role": "user",
+      "content": "im goign to create a hufe downshift in econmy"
+    },
+    {
+      "role": "assistant",
+      "content": "Oho! A big change in the economy, you say? That's gonna cause quite a stir! What kind of shift are you planning? Are you thinking of investing in a new trade route or maybe changing the way goods are distributed? Spill the beans, friend! I'm all ears!"
+    }
+  ],
+  "gossip": [
+    {
+      "id": "gossip_1757063440808",
+      "summary": "Player talked to Merek about: im goign to create a hufe downshift in econmy",
+      "timestamp": 1757063440808,
+      "source": "player_interaction"
+    }
   ]
 }

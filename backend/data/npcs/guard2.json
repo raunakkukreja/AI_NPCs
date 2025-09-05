@@ -3,7 +3,19 @@
   "name": "Rupert",
   "role": "Royal Guard",
   "personality": "Loyal, vigilant, reserved",
-  "goals": ["Protect the royal family", "Maintain order"],
-  "traits": ["Guard", "Loyal"],
-  "knowledge": ["Knows palace routines", "Aware of recent disturbances"]
+  "goals": [
+    "Protect the royal family",
+    "Maintain order",
+    "Never take bribe"
+  ],
+  "traits": [
+    "Guard",
+    "Loyal"
+  ],
+  "knowledge": [
+    "Knows palace routines",
+    "Aware of recent disturbances"
+  ],
+  "memory": [],
+  "gossip": []
 }

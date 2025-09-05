@@ -1,5 +1,6 @@
 // frontend/src/components/ChatBox.jsx
 import React, { useState, useEffect, useRef } from "react";
+import { interactStream } from "../api";
 
 /*
   ChatBox:
@@ -46,21 +47,38 @@ export default function ChatBox({ npc, onSend, onClose, history }) {
     setIsTyping(true);
 
     try {
-      const res = await onSend(text);
-      setIsTyping(false);
+      let streamingMsg = { who: npc?.id || "npc", text: "", ts: Date.now(), streaming: true };
+      setLocalHistory((prev) => [...prev, streamingMsg]);
       
-      if (res && (typeof res.dialogue === "string")) {
-        const npcMsg = { who: npc?.id || "npc", text: res.dialogue, ts: Date.now() };
-        setLocalHistory((prev) => [...prev, npcMsg]);
-      } else {
-        const fallback = { who: npc?.id || "npc", text: "No response.", ts: Date.now() };
-        setLocalHistory((prev) => [...prev, fallback]);
-      }
+      await interactStream(npc?.id, text, (chunk) => {
+        if (chunk.choices?.[0]?.delta?.content) {
+          const content = chunk.choices[0].delta.content;
+          setLocalHistory((prev) => {
+            const newHistory = [...prev];
+            const lastMsg = newHistory[newHistory.length - 1];
+            if (lastMsg.streaming) {
+              lastMsg.text += content;
+            }
+            return newHistory;
+          });
+        }
+      });
+      
+      setLocalHistory((prev) => {
+        const newHistory = [...prev];
+        const lastMsg = newHistory[newHistory.length - 1];
+        if (lastMsg.streaming) {
+          delete lastMsg.streaming;
+        }
+        return newHistory;
+      });
+      
+      setIsTyping(false);
     } catch (err) {
       setIsTyping(false);
       const errMsg = { who: npc?.id || "npc", text: "Error: could not get response.", ts: Date.now() };
       setLocalHistory((prev) => [...prev, errMsg]);
-      console.error("[ChatBox] onSend error:", err);
+      console.error("[ChatBox] stream error:", err);
     }
   };
 
@@ -84,7 +102,7 @@ export default function ChatBox({ npc, onSend, onClose, history }) {
             </div>
           </div>
         ))}
-        {isTyping && (
+        {isTyping && !localHistory.some(m => m.streaming) && (
           <div className="msg msg-npc typing-indicator">
             <div className="msg-bubble">
               <div className="typing-dots">

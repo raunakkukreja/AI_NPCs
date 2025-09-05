@@ -3,12 +3,28 @@
   "name": "Robert",
   "role": "Innkeeper",
   "personality": "wise, observant, calm, matriarchal, deeply loyal, insightful, speaks deliberately, keeper of secrets, community protector",
-  "goals": ["Keep the tavern safe", "Make a living", "Collect stories and rumors"],
-  "traits": ["Gossiper"],
+  "goals": [
+    "Keep the tavern safe",
+    "Make a living",
+    "Collect stories and rumors"
+  ],
+  "traits": [
+    "Gossiper"
+  ],
   "knowledge": [
     "Knows of a moody old man named Dorian who frequents the market",
     "Has heard rumors about Helios, a former prisoner who knows guard patrols",
     "Remembers customers who paid tabs or did favors"
   ],
-  "greeting_seed": "Welcome to the Rusty Anchor. Warm ale, warmer gossip. You look like you have secrets — speak plainly and pay your tab."
+  "greeting_seed": "Welcome to the Rusty Anchor. Warm ale, warmer gossip. You look like you have secrets — speak plainly and pay your tab.",
+  "memory": [],
+  "gossip": [
+    {
+      "id": "gossip_1757063440808",
+      "summary": "Player talked to Merek about: im goign to create a hufe downshift in econmy",
+      "timestamp": 1757063440808,
+      "source": "merchant",
+      "sharedAt": 1757063461695
+    }
+  ]
 }

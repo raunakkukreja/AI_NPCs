@@ -15,6 +15,6 @@
     "Has a known preference for a favored bribe (a coin from a specific mint)"
   ],
   "greeting_seed": "Halt. State your business. Papers, please — or keep walking.",
-  "memory": [
-  ]
+  "memory": [],
+  "gossip": []
 }

@@ -12,23 +12,29 @@ const INITIAL_CHARACTERS = [
   { id: "player", name: "Nico", type: "player", pos: [MAP_W/2, MAP_H/2] },
   { id: "guard", name: "Palace Guard", type: "npc", pos: [1049, 529], 
     path: [[1049, 529], [1680, 525]], speed: 50, _meta: { idx: 0, t: 0, pauseUntil: 0 } },
-  { id: "thief", name: "Thief", type: "npc", pos: [1050, 718],
+  { id: "thief", name: "Helios", type: "npc", pos: [1050, 718],
     path: [[1050, 718], [1249, 720], [1531, 751], [1692, 631]], speed: 40, _meta: { idx: 0, t: 0, pauseUntil: 0 } },
-  { id: "merchant", name: "Merchant", type: "npc", pos: [1486, 816],
-    bounds: { minX: 1486, minY: 816, maxX: 2554, maxY: 1500 }, speed: 60, _meta: { target: null, changeTime: 0 } },
+  { id: "merchant", name: "Merchant", type: "npc", pos: [1759, 879],
+    path: [[1759, 879], [1813, 1370], [1578, 1320], [2509, 1354], [2034, 882], [2063, 1323], [2295, 883], [2329, 1355]], speed: 60, _meta: { idx: 0, t: 0, pauseUntil: 0 } },
   { id: "old_man", name: "Old Man", type: "npc", pos: [288, 446],
-    path: [[288, 446], [918, 506], [1103, 521]], speed: 25, _meta: { idx: 0, t: 0, pauseUntil: 0 } },
+    path: [[318, 469], [891, 485], [1103, 521]], speed: 25, _meta: { idx: 0, t: 0, pauseUntil: 0 } },
   { id: "guard2", name: "Royal Guard", type: "npc", pos: [1372, 502],
     path: [[1372, 502], [1374, 924]], speed: 50, _meta: { idx: 0, t: 0, pauseUntil: 0 } },
-  { id: "bartender", name: "Bartender", type: "npc", pos: [2396, 258],
-    path: [[2396, 258], [2666, 278], [2620, 272], [2642, 1074], [1474, 1204], [2646, 1318]], speed: 45, _meta: { idx: 0, t: 0, pauseUntil: 0 } }
+  { id: "bartender", name: "Bartender", type: "npc", pos: [2281, 251],
+    path: [[2281, 251], [2679, 287], [2598, 264], [2642, 1370], [1576, 1334], [2630, 1346]], speed: 45, _meta: { idx: 0, t: 0, pauseUntil: 0 } },
+  { id: "woman_1", name: "Woman", type: "npc", pos: [134, 38],
+    path: [[134, 38], [150, 1267]], speed: 30, _meta: { idx: 0, t: 0, pauseUntil: 0 } },
+  { id: "boy", name: "Boy", type: "npc", pos: [2486, 502],
+    path: [[2486, 502], [2502, 510]], speed: 20, _meta: { idx: 0, t: 0, pauseUntil: 0 } },
+  { id: "woman_2", name: "Woman 2", type: "npc", pos: [2278, 233],
+    path: [[2278, 233], [2558, 280]], speed: 35, _meta: { idx: 0, t: 0, pauseUntil: 0 } }
 ];
 
 function lerp(a, b, t) { return a + (b - a) * t; }
 function lerpPos(a, b, t) { return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; }
 function dist(a,b){ return Math.hypot(a[0]-b[0], a[1]-b[1]); }
 
-export default function World2DMap({ onTalkRequest, pausedNPCId }) {
+export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteractions = [] }) {
   const containerRef = useRef(null);
   const [entities, setEntities] = useState(() => INITIAL_CHARACTERS);
   const [playerIdx] = useState(0);
@@ -44,6 +50,9 @@ export default function World2DMap({ onTalkRequest, pausedNPCId }) {
   const [drawStart, setDrawStart] = useState(null);
   const [drawEnd, setDrawEnd] = useState(null);
   const [drawnRect, setDrawnRect] = useState(null);
+  const [gossipNetwork, setGossipNetwork] = useState({});
+  const [showGossipGraph, setShowGossipGraph] = useState(true);
+  const [sharingPairs, setSharingPairs] = useState([]);
 
   // Load map coordinates
   useEffect(() => {
@@ -51,6 +60,40 @@ export default function World2DMap({ onTalkRequest, pausedNPCId }) {
       .then(res => res.json())
       .then(data => setMapCoordinates(data))
       .catch(err => console.error('Failed to load map coordinates:', err));
+  }, []);
+
+  // Reset data on page load and load gossip from backend
+  useEffect(() => {
+    const resetAndLoad = async () => {
+      try {
+        // Reset all NPC data on page refresh
+        await fetch('/api/reset', { method: 'POST' });
+        console.log('NPC data reset on page load');
+        
+        // Load gossip network
+        const response = await fetch('/api/gossip');
+        if (response.ok) {
+          const gossipData = await response.json();
+          setGossipNetwork(gossipData);
+        }
+      } catch (err) {
+        console.error('Failed to reset/load:', err);
+      }
+    };
+    
+    resetAndLoad();
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/gossip');
+        if (response.ok) {
+          const gossipData = await response.json();
+          setGossipNetwork(gossipData);
+        }
+      } catch (err) {
+        console.error('Failed to load gossip network:', err);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   const updateEntityPos = useCallback((id, pos) => {
@@ -144,7 +187,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId }) {
         return next;
       });
 
-      // Update camera and check nearest points
+      // Update camera, check nearest points, and handle gossip spreading
       setEntities(current => {
         const player = current[playerIdx];
         if (player) {
@@ -174,8 +217,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId }) {
           const buildings = [
             { x: 1147, y: 700, label: 'Old Ruin 1' },
             { x: 1621, y: 700, label: 'Old Ruin 2' },
-            { x: 958, y: 1036, label: 'Fountain' },
-            { x: 970, y: 1106, label: 'Fountain' },
+            { x: 1014, y: 1071, label: 'Fountain' },
             { x: 1369, y: 437, label: 'Royal Court' },
             { x: 2424, y: 230, label: 'Bartender House' }
           ];
@@ -191,6 +233,27 @@ export default function World2DMap({ onTalkRequest, pausedNPCId }) {
           });
           
           setNearestBuilding(nearestBldg);
+          
+          // Handle gossip spreading between NPCs
+          const npcs = current.filter(ent => ent.type === 'npc');
+          const newSharingPairs = [];
+          
+          npcs.forEach((npc1, i) => {
+            npcs.forEach((npc2, j) => {
+              if (i !== j && dist(npc1.pos, npc2.pos) < 100) {
+                newSharingPairs.push([npc1.id, npc2.id]);
+                
+                // Trigger gossip sharing on backend
+                fetch('/api/gossip/share', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ npc1: npc1.id, npc2: npc2.id })
+                }).catch(err => console.error('Gossip share failed:', err));
+              }
+            });
+          });
+          
+          setSharingPairs(newSharingPairs);
         }
         return current;
       });
@@ -276,8 +339,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId }) {
         const buildings = [
           { x: 1147, y: 700, label: 'Old Ruin 1', id: 'old_ruin_1' },
           { x: 1621, y: 700, label: 'Old Ruin 2', id: 'old_ruin_2' },
-          { x: 958, y: 1036, label: 'Fountain', id: 'fountain_1' },
-          { x: 970, y: 1106, label: 'Fountain', id: 'fountain_2' },
+          { x: 1014, y: 1071, label: 'Fountain', id: 'fountain' },
           { x: 1369, y: 437, label: 'Royal Court', id: 'royal_court' },
           { x: 2424, y: 230, label: 'Bartender House', id: 'bartender_house' }
         ];
@@ -388,153 +450,83 @@ export default function World2DMap({ onTalkRequest, pausedNPCId }) {
         {/* Entities */}
         {entities.map(ent => {
           const isPlayer = ent.type === 'player';
-          const size = isPlayer ? 36 : 64;
-          const initials = ent.name ? ent.name.split(" ").map(s=>s[0]).slice(0,2).join("") : ent.id.slice(0,2);
+          const size = isPlayer ? 86 : 80;
           
           const player = entities[playerIdx];
           const npcDistance = player ? dist([player.pos[0], player.pos[1]], [ent.pos[0], ent.pos[1]]) : Infinity;
           const isNearNPC = npcDistance <= 80;
           
-          if (ent.id === 'guard' || ent.id === 'guard2') {
-            return (
-              <img
-                key={ent.id}
-                src="assets/guard_female.png"
-                alt={ent.name}
-                title={ent.name}
-                onClick={() => isNearNPC && onTalkRequest && onTalkRequest(ent.id)}
-                style={{
-                  left: ent.pos[0] - size/2,
-                  top: ent.pos[1] - size/2,
-                  width: size,
-                  height: size,
-                  position: "absolute",
-                  borderRadius: "50%",
-                  border: "2px solid rgba(255,255,255,0.5)",
-                  boxShadow: isNearNPC ? "0 0 18px 6px rgba(255,215,0,0.8)" : "none",
-                  cursor: isNearNPC ? "pointer" : "default",
-                  zIndex: 35
-                }}
-              />
-            );
-          }
+          // Check if this NPC is sharing gossip with another NPC
+          const isSharing = !isPlayer && entities.some(other => 
+            other.type === 'npc' && other.id !== ent.id && dist(ent.pos, other.pos) < 100
+          );
           
-          if (ent.id === 'thief') {
-            return (
-              <img
-                key={ent.id}
-                src="assets/thief.png"
-                alt={ent.name}
-                title={ent.name}
-                onClick={() => isNearNPC && onTalkRequest && onTalkRequest(ent.id)}
-                style={{
-                  left: ent.pos[0] - size/2,
-                  top: ent.pos[1] - size/2,
-                  width: size,
-                  height: size,
-                  position: "absolute",
-                  borderRadius: "50%",
-                  border: "2px solid rgba(255,255,255,0.5)",
-                  boxShadow: isNearNPC ? "0 0 18px 6px rgba(255,215,0,0.8)" : "none",
-                  cursor: isNearNPC ? "pointer" : "default",
-                  zIndex: 35
-                }}
-              />
-            );
-          }
+          const getEntityImage = (id) => {
+            if (id === 'player') return 'assets/nico.png';
+            if (id === 'guard' || id === 'guard2') return 'assets/guard_female.png';
+            if (id === 'thief') return 'assets/thief.png';
+            if (id === 'merchant') return 'assets/merchant.png';
+            if (id === 'old_man') return 'assets/old_man.png';
+            if (id === 'bartender') return 'assets/bartender.png';
+            if (id === 'woman_1') return 'assets/woman_1.png';
+            if (id === 'boy') return 'assets/boy.png';
+            if (id === 'woman_2') return 'assets/woman_2.png';
+            return null;
+          };
           
-          if (ent.id === 'merchant') {
-            return (
-              <img
-                key={ent.id}
-                src="assets/merchant.png"
-                alt={ent.name}
-                title={ent.name}
-                onClick={() => isNearNPC && onTalkRequest && onTalkRequest(ent.id)}
-                style={{
-                  left: ent.pos[0] - size/2,
-                  top: ent.pos[1] - size/2,
-                  width: size,
-                  height: size,
-                  position: "absolute",
-                  borderRadius: "50%",
-                  border: "2px solid rgba(255,255,255,0.5)",
-                  boxShadow: isNearNPC ? "0 0 18px 6px rgba(255,215,0,0.8)" : "none",
-                  cursor: isNearNPC ? "pointer" : "default",
-                  zIndex: 35
-                }}
-              />
-            );
-          }
+          const entityImage = getEntityImage(ent.id);
           
-          if (ent.id === 'old_man') {
-            return (
-              <img
-                key={ent.id}
-                src="assets/old_man.png"
-                alt={ent.name}
-                title={ent.name}
-                onClick={() => isNearNPC && onTalkRequest && onTalkRequest(ent.id)}
-                style={{
-                  left: ent.pos[0] - size/2,
-                  top: ent.pos[1] - size/2,
-                  width: size,
-                  height: size,
-                  position: "absolute",
-                  borderRadius: "50%",
-                  border: "2px solid rgba(255,255,255,0.5)",
-                  boxShadow: isNearNPC ? "0 0 18px 6px rgba(255,215,0,0.8)" : "none",
-                  cursor: isNearNPC ? "pointer" : "default",
-                  zIndex: 35
-                }}
-              />
-            );
-          }
-          
-          if (ent.id === 'bartender') {
-            return (
-              <img
-                key={ent.id}
-                src="assets/bartender.png"
-                alt={ent.name}
-                title={ent.name}
-                onClick={() => isNearNPC && onTalkRequest && onTalkRequest(ent.id)}
-                style={{
-                  left: ent.pos[0] - size/2,
-                  top: ent.pos[1] - size/2,
-                  width: size,
-                  height: size,
-                  position: "absolute",
-                  borderRadius: "50%",
-                  border: "2px solid rgba(255,255,255,0.5)",
-                  boxShadow: isNearNPC ? "0 0 18px 6px rgba(255,215,0,0.8)" : "none",
-                  cursor: isNearNPC ? "pointer" : "default",
-                  zIndex: 35
-                }}
-              />
-            );
+          let filterEffect = "none";
+          if (!isPlayer && isNearNPC) {
+            filterEffect = "drop-shadow(0 0 30px rgba(255,215,0,1)) drop-shadow(0 0 60px rgba(255,215,0,0.6))";
+          } else if (isSharing) {
+            filterEffect = "drop-shadow(0 0 20px rgba(128,0,128,1)) drop-shadow(0 0 40px rgba(128,0,128,0.6))";
           }
           
           return (
-            <div
-              key={ent.id}
-              title={ent.name}
-              className={`world-entity ${isPlayer ? 'player-entity' : 'npc-entity'}`}
-              style={{
-                left: ent.pos[0] - size/2,
-                top: ent.pos[1] - size/2,
-                width: size, height: size,
-                background: isPlayer ? "#9ae6b4" : "#ccc",
-                border: "2px solid #0f1724",
-                position: "absolute",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 40
-              }}
-            >
-              <div style={{fontSize:12, fontWeight:700, color: "#061014"}}>{initials}</div>
+            <div key={ent.id} style={{ position: 'absolute', left: ent.pos[0] - size/2, top: ent.pos[1] - size/2 }}>
+              {isPlayer && (
+                <div style={{
+                  position: 'absolute',
+                  left: size/2 - 8,
+                  top: -20,
+                  width: 0,
+                  height: 0,
+                  borderLeft: '8px solid transparent',
+                  borderRight: '8px solid transparent',
+                  borderTop: '12px solid #ffff00',
+                  zIndex: 50
+                }} />
+              )}
+              <img
+                src={entityImage}
+                alt={ent.name}
+                title={ent.name}
+                onClick={() => !isPlayer && isNearNPC && onTalkRequest && onTalkRequest(ent.id)}
+                style={{
+                  width: size,
+                  height: size,
+                  filter: filterEffect,
+                  cursor: !isPlayer && isNearNPC ? "pointer" : "default",
+                  zIndex: isPlayer ? 40 : 35
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                left: size/2,
+                top: -35,
+                transform: 'translateX(-50%)',
+                background: 'rgba(0,0,0,0.8)',
+                color: 'white',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap',
+                zIndex: 45
+              }}>
+                {ent.name}
+              </div>
             </div>
           );
         })
@@ -554,10 +546,9 @@ export default function World2DMap({ onTalkRequest, pausedNPCId }) {
             const markers = [
               { x: 1147, y: 700, label: 'Old Ruin 1', type: 'circle' },
               { x: 1621, y: 700, label: 'Old Ruin 2', type: 'circle' },
-              { x: 958, y: 1036, label: 'Fountain', type: 'rect', w: 151, h: 10 },
-              { x: 970, y: 1106, label: 'Fountain', type: 'rect', w: 161, h: 10 },
+              { x: 1014, y: 1071, label: 'Fountain', type: 'circle' },
               { x: 1369, y: 437, label: 'Royal Court', type: 'circle' },
-              { x: 2424, y: 230, label: 'Bartender House', type: 'rect', w: 4, h: 12 }
+              { x: 2424, y: 230, label: 'Bartender House', type: 'circle' }
             ];
             return markers.map((marker, i) => {
               const distance = player ? dist([player.pos[0], player.pos[1]], [marker.x, marker.y]) : Infinity;
@@ -566,28 +557,15 @@ export default function World2DMap({ onTalkRequest, pausedNPCId }) {
               
               return (
                 <g key={i}>
-                  {marker.type === 'circle' ? (
-                    <circle
-                      cx={marker.x}
-                      cy={marker.y}
-                      r={isNear ? "8" : "6"}
-                      fill="rgba(255,255,255,0.3)"
-                      stroke="white"
-                      strokeWidth="2"
-                      filter={isNear ? "drop-shadow(0 0 8px rgba(255,215,0,0.8))" : "none"}
-                    />
-                  ) : (
-                    <rect
-                      x={marker.x - marker.w/2}
-                      y={marker.y - marker.h/2}
-                      width={marker.w}
-                      height={marker.h}
-                      fill="rgba(255,255,255,0.3)"
-                      stroke="white"
-                      strokeWidth="1"
-                      filter={isNear ? "drop-shadow(0 0 8px rgba(255,215,0,0.8))" : "none"}
-                    />
-                  )}
+                  <circle
+                    cx={marker.x}
+                    cy={marker.y}
+                    r={isNear ? "8" : "6"}
+                    fill="rgba(255,255,255,0.3)"
+                    stroke="white"
+                    strokeWidth="2"
+                    filter={isNear ? "drop-shadow(0 0 8px rgba(255,215,0,0.8))" : "none"}
+                  />
                   {isNear && (
                     <text
                       x={marker.x + 12}
@@ -684,6 +662,151 @@ export default function World2DMap({ onTalkRequest, pausedNPCId }) {
 
       </div>
       
+      {/* Minimap */}
+      <div style={{
+        position: 'fixed',
+        top: '10px',
+        left: '10px',
+        width: '200px',
+        height: '120px',
+        background: 'rgba(0,0,0,0.8)',
+        border: '2px solid rgba(255,255,255,0.3)',
+        borderRadius: '8px',
+        zIndex: 300
+      }}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${MAP_W} ${MAP_H}`}>
+          <rect width={MAP_W} height={MAP_H} fill="rgba(50,50,50,0.8)" />
+          {entities.map(ent => (
+            <circle
+              key={ent.id}
+              cx={ent.pos[0]}
+              cy={ent.pos[1]}
+              r={ent.type === 'player' ? '12' : '8'}
+              fill={ent.type === 'player' ? '#00ff00' : '#ffff00'}
+            />
+          ))}
+          <rect
+            x={cameraPos[0]}
+            y={cameraPos[1]}
+            width={window.innerWidth}
+            height={window.innerHeight}
+            fill="none"
+            stroke="rgba(255,255,255,0.5)"
+            strokeWidth="4"
+          />
+        </svg>
+      </div>
+
+      {/* Gossip Network Graph */}
+      {showGossipGraph && (
+        <div style={{
+          position: 'fixed',
+          bottom: '10px',
+          right: '10px',
+          width: '300px',
+          height: '280px',
+          background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9))',
+          border: '1px solid rgba(148, 163, 184, 0.2)',
+          borderRadius: '12px',
+          padding: '16px',
+          zIndex: 300,
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
+        }}>
+          <div style={{ color: 'white', fontSize: '14px', marginBottom: '12px', fontWeight: '600' }}>
+            Gossip Network
+          </div>
+          
+          <div style={{ color: '#94a3b8', fontSize: '11px', marginBottom: '16px', lineHeight: '1.4' }}>
+            Total Gossip: {Object.values(gossipNetwork).reduce((sum, arr) => sum + arr.length, 0)}<br/>
+            Active Shares: {sharingPairs.length}
+          </div>
+          
+          <svg width="268" height="160" style={{ marginBottom: '12px' }}>
+            {entities.filter(ent => ent.type === 'npc').map((npc, i) => {
+              const x = 35 + (i % 4) * 60;
+              const y = 35 + Math.floor(i / 4) * 50;
+              const hasGossip = gossipNetwork[npc.id] && gossipNetwork[npc.id].length > 0;
+              const isSharing = sharingPairs.some(pair => pair.includes(npc.id));
+              
+              return (
+                <g key={npc.id}>
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r="12"
+                    fill={hasGossip ? '#ef4444' : (isSharing ? '#8b5cf6' : '#06b6d4')}
+                    stroke={isSharing ? '#a855f7' : 'rgba(255,255,255,0.3)'}
+                    strokeWidth={isSharing ? '2' : '1'}
+                    filter={hasGossip ? 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.5))' : (isSharing ? 'drop-shadow(0 0 8px rgba(139, 92, 246, 0.5))' : 'none')}
+                  />
+                  <text
+                    x={x}
+                    y={y + 25}
+                    fill="white"
+                    fontSize="10"
+                    textAnchor="middle"
+                    fontWeight="500"
+                  >
+                    {npc.name.split(' ')[0]}
+                  </text>
+                  {hasGossip && (
+                    <text
+                      x={x + 16}
+                      y={y - 10}
+                      fill="#fbbf24"
+                      fontSize="12"
+                      fontWeight="bold"
+                    >
+                      {gossipNetwork[npc.id].length}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+          
+          <button
+            onClick={() => setShowGossipGraph(false)}
+            style={{
+              width: '100%',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '6px',
+              padding: '8px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: '500'
+            }}
+          >
+            Hide Gossip Network
+          </button>
+        </div>
+      )}
+
+      {!showGossipGraph && (
+        <button
+          onClick={() => setShowGossipGraph(true)}
+          style={{
+            position: 'fixed',
+            bottom: '10px',
+            right: '10px',
+            background: 'rgba(0,0,0,0.8)',
+            color: 'white',
+            border: '1px solid rgba(255,255,255,0.3)',
+            borderRadius: '6px',
+            padding: '10px 16px',
+            cursor: 'pointer',
+            zIndex: 300,
+            fontSize: '12px',
+            fontWeight: '500'
+          }}
+        >
+          Show Gossip
+        </button>
+      )}
+
       {/* Instructions */}
       <div style={{
         position: 'fixed',

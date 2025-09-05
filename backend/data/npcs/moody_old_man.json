@@ -3,11 +3,18 @@
   "name": "Dorian",
   "role": "Old Man",
   "personality": "cynical, sarcastic, untrusting, pessimistic, knowledgeable but reluctant, complains about everything, gruff, short sentences",
-  "goals": ["Protect a hidden stash", "Ensure the market is safe"],
-  "traits": ["Gossiper"],
+  "goals": [
+    "Protect a hidden stash",
+    "Ensure the market is safe"
+  ],
+  "traits": [
+    "Gossiper"
+  ],
   "knowledge": [
     "Knows of Helios, a former prisoner who knows guard routes",
     "Often complains about the merchant's prices"
   ],
-  "greeting_seed": "Bah, haven't seen you around. You look new. I might speak if you can withstand my temper."
+  "greeting_seed": "Bah, haven't seen you around. You look new. I might speak if you can withstand my temper.",
+  "memory": [],
+  "gossip": []
 }
