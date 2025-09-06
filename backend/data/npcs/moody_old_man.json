@@ -15,6 +15,43 @@
     "Often complains about the merchant's prices"
   ],
   "greeting_seed": "Bah, haven't seen you around. You look new. I might speak if you can withstand my temper.",
-  "memory": [],
-  "gossip": []
+  "memory": [
+    {
+      "role": "user",
+      "content": "wassgud my gai"
+    },
+    {
+      "role": "assistant",
+      "content": "\"Ah, great. Another one who thinks they're above the law. Heard you were threatening to stab that other guard. What's the world coming to? Can't even trust the ones sworn to protect us. Mark my words, trouble's brewin'.\""
+    }
+  ],
+  "gossip": [
+    {
+      "id": "gossip_1757149688224",
+      "summary": "Player talked to Rupert about: imma stab the other gurad",
+      "timestamp": 1757149688224,
+      "source": "guard",
+      "sharedAt": 1757149938206
+    },
+    {
+      "id": "gossip_1757149793205",
+      "summary": "Player talked to Rupert about: howdie",
+      "timestamp": 1757149793205,
+      "source": "guard",
+      "sharedAt": 1757149938206
+    },
+    {
+      "id": "gossip_1757149851964",
+      "summary": "Player talked to Rupert about: have you hearda nything ?",
+      "timestamp": 1757149851964,
+      "source": "guard",
+      "sharedAt": 1757149938206
+    },
+    {
+      "id": "gossip_1757150130758",
+      "summary": "Player talked to Dorian about: wassgud my gai",
+      "timestamp": 1757150130758,
+      "source": "player_interaction"
+    }
+  ]
 }

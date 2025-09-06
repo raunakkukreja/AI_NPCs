@@ -33,9 +33,9 @@ async function updateNpcMemory(npcId, userText, assistantText) {
   npc.memory.push({ role: 'user', content: userText });
   npc.memory.push({ role: 'assistant', content: assistantText });
   
-  // Keep only last 8 messages (4 interactions)
-  if (npc.memory.length > 8) {
-    npc.memory = npc.memory.slice(-8);
+  // Keep only last 20 messages (10 interactions)
+  if (npc.memory.length > 20) {
+    npc.memory = npc.memory.slice(-20);
   }
   
   // Create simple gossip summary
@@ -101,11 +101,18 @@ async function handleInteract(req, res) {
   const gameState = loadGameState();
   const gossip = loadRecentGossipForNpc(npcId, 5);
 
-  // Build messages for the model (simple: system persona + context + user)
+  // Check if NPC has gossip about the player and should start conversation
+  const npcGossip = npc.gossip || [];
+  const playerGossip = npcGossip.filter(g => g.summary && g.summary.includes('Player'));
+  const shouldStartWithGossip = playerGossip.length > 0 && (!npc.memory || npc.memory.length === 0);
+
   const systemContent = `You are ${npc.name}. Persona: ${npc.personality || ''}. Traits: ${ (npc.traits||[]).join(', ') }. You are role-playing as this NPC. Keep replies short and in-character.`;
   let context = `Location: ${gameState.location || 'unknown'}. Time: ${gameState.time || ''}. Player reputation: ${gameState.player?.reputation || 'unknown'}.`;
   if (gossip.length) {
     context += ` Recent gossip relevant to you: ${gossip.map(g => g.text).join(' | ')}`;
+  }
+  if (playerGossip.length > 0) {
+    context += ` You've heard gossip about the player: ${playerGossip.map(g => g.summary).join(', ')}`;
   }
 
   const messages = [
@@ -113,12 +120,17 @@ async function handleInteract(req, res) {
     { role: 'system', content: `Context: ${context}` }
   ];
   
-  // Add memory (last 2 conversations)
   if (npc.memory && npc.memory.length > 0) {
     messages.push(...npc.memory);
   }
   
-  messages.push({ role: 'user', content: playerText });
+  // If NPC has gossip, they initiate conversation about it
+  if (shouldStartWithGossip) {
+    const gossipToMention = playerGossip[0].summary;
+    messages.push({ role: 'user', content: `Player approaches you. You should immediately start talking about the gossip you heard: "${gossipToMention}"` });
+  } else {
+    messages.push({ role: 'user', content: playerText });
+  }
 
   try {
     const result = await callLocalModel(messages, { max_tokens: 200, temperature: 0.35 });
@@ -136,6 +148,18 @@ async function handleInteract(req, res) {
   }
 }
 
+// GET /api/npc/:id/check-gossip - Check if NPC should initiate gossip conversation
+function handleCheckGossip(req, res) {
+  const npcId = req.params.id;
+  const npc = loadNpcProfile(npcId) || { name: npcId, personality: "", traits: [] };
+  
+  const npcGossip = npc.gossip || [];
+  const playerGossip = npcGossip.filter(g => g.summary && g.summary.includes('Player'));
+  const shouldStartWithGossip = playerGossip.length > 0 && (!npc.memory || npc.memory.length === 0);
+  
+  res.json({ shouldInitiate: shouldStartWithGossip, gossip: shouldStartWithGossip ? playerGossip[0].summary : null });
+}
+
 // POST /api/npc/:id/interact/stream
 async function handleInteractStream(req, res) {
   const npcId = req.params.id;
@@ -147,10 +171,18 @@ async function handleInteractStream(req, res) {
   const gameState = loadGameState();
   const gossip = loadRecentGossipForNpc(npcId, 5);
 
+  // Check if NPC has gossip about the player and should start conversation
+  const npcGossip = npc.gossip || [];
+  const playerGossip = npcGossip.filter(g => g.summary && g.summary.includes('Player'));
+  const shouldStartWithGossip = playerGossip.length > 0 && (!npc.memory || npc.memory.length === 0);
+
   const systemContent = `You are ${npc.name}. Persona: ${npc.personality || ''}. Traits: ${ (npc.traits||[]).join(', ') }. You are role-playing as this NPC. Keep replies short and in-character.`;
   let context = `Location: ${gameState.location || 'unknown'}. Time: ${gameState.time || ''}. Player reputation: ${gameState.player?.reputation || 'unknown'}.`;
   if (gossip.length) {
     context += ` Recent gossip relevant to you: ${gossip.map(g => g.text).join(' | ')}`;
+  }
+  if (playerGossip.length > 0) {
+    context += ` You've heard gossip about the player: ${playerGossip.map(g => g.summary).join(', ')}`;
   }
 
   const messages = [
@@ -162,7 +194,13 @@ async function handleInteractStream(req, res) {
     messages.push(...npc.memory);
   }
   
-  messages.push({ role: 'user', content: playerText });
+  // If NPC has gossip, they initiate conversation about it
+  if (shouldStartWithGossip) {
+    const gossipToMention = playerGossip[0].summary;
+    messages.push({ role: 'user', content: `Player approaches you. You should immediately start talking about the gossip you heard: "${gossipToMention}"` });
+  } else {
+    messages.push({ role: 'user', content: playerText });
+  }
 
   try {
     res.writeHead(200, {
@@ -295,4 +333,4 @@ function handleGossipShare(req, res) {
   }
 }
 
-module.exports = { handleInteract, handleInteractStream, handleGetGossip, handleGossipShare, handleReset };
+module.exports = { handleInteract, handleInteractStream, handleGetGossip, handleGossipShare, handleReset, handleCheckGossip };

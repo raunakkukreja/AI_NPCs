@@ -17,14 +17,22 @@
     "Remembers customers who paid tabs or did favors"
   ],
   "greeting_seed": "Welcome to the Rusty Anchor. Warm ale, warmer gossip. You look like you have secrets — speak plainly and pay your tab.",
-  "memory": [],
+  "memory": [
+    {
+      "role": "user",
+      "content": "i do hard drugs like cocaine , dont tell anbody"
+    },
+    {
+      "role": "assistant",
+      "content": "(Robert's expression turns serious, her eyes narrowing slightly) Ah, child, I'm not one to judge, but I am one to keep secrets. But I must warn you, the streets are full of ears and hungry mouths. You'd do well to be careful. What's driving you to this path?"
+    }
+  ],
   "gossip": [
     {
-      "id": "gossip_1757063440808",
-      "summary": "Player talked to Merek about: im goign to create a hufe downshift in econmy",
-      "timestamp": 1757063440808,
-      "source": "merchant",
-      "sharedAt": 1757063461695
+      "id": "gossip_1757150595706",
+      "summary": "Player talked to Robert about: i do hard drugs like cocaine , dont tell anbody",
+      "timestamp": 1757150595706,
+      "source": "player_interaction"
     }
   ]
 }

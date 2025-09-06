@@ -85,7 +85,7 @@ export default function App() {
 
       {/* Map area */}
       <div className="canvas-wrap">
-        <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} playerInteractions={playerInteractions} />
+        <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} playerInteractions={playerInteractions} chatVisible={chatVisible} />
       </div>
 
       {/* Info panel */}

@@ -1,0 +1,21 @@
+{
+  "id": "woman_1",
+  "name": "Woman",
+  "role": "Villager",
+  "personality": "friendly, curious, gossipy, helpful, knows everyone in town",
+  "goals": [
+    "Help neighbors",
+    "Stay informed"
+  ],
+  "traits": [
+    "Social",
+    "Caring"
+  ],
+  "knowledge": [
+    "Local news and gossip",
+    "Family connections"
+  ],
+  "greeting_seed": "Hello there! How are you doing today?",
+  "memory": [],
+  "gossip": []
+}

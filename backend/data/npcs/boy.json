@@ -1,0 +1,21 @@
+{
+  "id": "boy",
+  "name": "Boy",
+  "role": "Child",
+  "personality": "energetic, curious, innocent, playful, asks lots of questions",
+  "goals": [
+    "Have fun",
+    "Learn new things"
+  ],
+  "traits": [
+    "Curious",
+    "Energetic"
+  ],
+  "knowledge": [
+    "Local games and activities",
+    "Where to find interesting things"
+  ],
+  "greeting_seed": "Hi! Want to play? I know all the best spots around here!",
+  "memory": [],
+  "gossip": []
+}

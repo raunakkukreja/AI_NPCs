@@ -16,5 +16,27 @@
   ],
   "greeting_seed": "Halt. State your business. Papers, please — or keep walking.",
   "memory": [],
-  "gossip": []
+  "gossip": [
+    {
+      "id": "gossip_1757149688224",
+      "summary": "Player talked to Rupert about: imma stab the other gurad",
+      "timestamp": 1757149688224,
+      "source": "guard2",
+      "sharedAt": 1757149739416
+    },
+    {
+      "id": "gossip_1757149793205",
+      "summary": "Player talked to Rupert about: howdie",
+      "timestamp": 1757149793205,
+      "source": "guard2",
+      "sharedAt": 1757149793211
+    },
+    {
+      "id": "gossip_1757149851964",
+      "summary": "Player talked to Rupert about: have you hearda nything ?",
+      "timestamp": 1757149851964,
+      "source": "guard2",
+      "sharedAt": 1757149862416
+    }
+  ]
 }

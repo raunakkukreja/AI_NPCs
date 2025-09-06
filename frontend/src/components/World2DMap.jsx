@@ -34,7 +34,7 @@ function lerp(a, b, t) { return a + (b - a) * t; }
 function lerpPos(a, b, t) { return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; }
 function dist(a,b){ return Math.hypot(a[0]-b[0], a[1]-b[1]); }
 
-export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteractions = [] }) {
+export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteractions = [], chatVisible = false }) {
   const containerRef = useRef(null);
   const [entities, setEntities] = useState(() => INITIAL_CHARACTERS);
   const [playerIdx] = useState(0);
@@ -170,10 +170,13 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
           if (i !== playerIdx) return ent;
           const pos = ent.pos.slice();
           let dx = 0, dy = 0;
-          if (keys.current['KeyW'] || keys.current['ArrowUp']) dy -= 1;
-          if (keys.current['KeyS'] || keys.current['ArrowDown']) dy += 1;
-          if (keys.current['KeyA'] || keys.current['ArrowLeft']) dx -= 1;
-          if (keys.current['KeyD'] || keys.current['ArrowRight']) dx += 1;
+          // Don't move if chat is visible
+          if (!chatVisible) {
+            if (keys.current['KeyW'] || keys.current['ArrowUp']) dy -= 1;
+            if (keys.current['KeyS'] || keys.current['ArrowDown']) dy += 1;
+            if (keys.current['KeyA'] || keys.current['ArrowLeft']) dx -= 1;
+            if (keys.current['KeyD'] || keys.current['ArrowRight']) dx += 1;
+          }
           if (dx !== 0 || dy !== 0) {
             const len = Math.hypot(dx,dy) || 1;
             const move = (playerSpeed * dt);

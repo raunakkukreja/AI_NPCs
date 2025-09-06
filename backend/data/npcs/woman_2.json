@@ -1,0 +1,21 @@
+{
+  "id": "woman_2",
+  "name": "Woman 2",
+  "role": "Villager",
+  "personality": "reserved, observant, thoughtful, speaks carefully, notices details",
+  "goals": [
+    "Mind her own business",
+    "Stay safe"
+  ],
+  "traits": [
+    "Observant",
+    "Cautious"
+  ],
+  "knowledge": [
+    "What happens around town",
+    "People's habits and routines"
+  ],
+  "greeting_seed": "Good day. Is there something you need?",
+  "memory": [],
+  "gossip": []
+}
