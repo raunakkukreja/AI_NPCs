@@ -77,11 +77,17 @@ export default function App() {
     <div className="app">
       {showTutorial && (
         <div className="tutorial">
-          <h3>Welcome to the city</h3>
-          <p>Click in the canvas to lock mouse.</p>
-          <p>Use <strong>W A S D</strong> to move, move mouse to look around.</p>
-          <p>Press <strong>E</strong> to interact with nearby NPCs.</p>
-          <button onClick={() => setShowTutorial(false)}>Got it</button>
+          <h3>Mission: First Dawn in Piraeus</h3>
+          <p>You are Nico Stavrakos, the secret, bastard son of the King of Athens. While the rightful heirs live in luxury, you have been raised in the shadows, trained in the arts of manipulation, combat, and deception.</p>
+          <p>Now, your time has come. On the command of a rival faction in Athens, you have been sent undercover to the city of Piraeus. Your mission: infiltrate the Royal Court and uncover the secrets that protect its power.</p>
+          <p>Every conversation is a test, every alliance a potential stepping stone. Your ultimate goal is not just knowledge, but the throne you believe is your birthright. Build your network, gather intelligence, and formulate a long-term strategy to one day overthrow the king.</p>
+          <p>The city is alive with stories. Your journey begins now. Good luck.</p>
+          <div style={{marginTop: '16px', padding: '12px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px'}}>
+            <strong>Controls:</strong><br/>
+            <strong>WASD:</strong> Navigate the city<br/>
+            <strong>X:</strong> Interact with people and landmarks
+          </div>
+          <button onClick={() => setShowTutorial(false)}>Begin Mission</button>
         </div>
       )}
 
