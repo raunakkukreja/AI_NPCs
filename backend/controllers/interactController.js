@@ -160,6 +160,18 @@ function handleCheckGossip(req, res) {
   res.json({ shouldInitiate: shouldStartWithGossip, gossip: shouldStartWithGossip ? playerGossip[0].summary : null });
 }
 
+// GET /api/npc/:id/profile - Get NPC profile
+function handleGetProfile(req, res) {
+  const npcId = req.params.id;
+  const npc = loadNpcProfile(npcId);
+  
+  if (!npc) {
+    return res.status(404).json({ error: 'NPC not found' });
+  }
+  
+  res.json(npc);
+}
+
 // POST /api/npc/:id/interact/stream
 async function handleInteractStream(req, res) {
   const npcId = req.params.id;
@@ -333,4 +345,4 @@ function handleGossipShare(req, res) {
   }
 }
 
-module.exports = { handleInteract, handleInteractStream, handleGetGossip, handleGossipShare, handleReset, handleCheckGossip };
+module.exports = { handleInteract, handleInteractStream, handleGetGossip, handleGossipShare, handleReset, handleCheckGossip, handleGetProfile };

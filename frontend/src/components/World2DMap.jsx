@@ -218,11 +218,13 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
           
           // Find nearest building marker
           const buildings = [
-            { x: 1147, y: 700, label: 'Old Ruin 1' },
-            { x: 1621, y: 700, label: 'Old Ruin 2' },
-            { x: 1014, y: 1071, label: 'Fountain' },
-            { x: 1369, y: 437, label: 'Royal Court' },
-            { x: 2424, y: 230, label: 'Bartender House' }
+            { x: 1147, y: 700, label: 'Old Ruin 1', id: 'old_ruin_1', description: 'Standing as a grim monument on the edge of the market, these crumbling stones are all that remain of the old senate building, destroyed in the devastating "Senators\' Affair" that led to a bloody revolt years ago. The city tries to forget the tragedy, leaving the ruins overgrown and silent—a place of hushed secrets and a stark warning against challenging the court.' },
+            { x: 1621, y: 700, label: 'Old Ruin 2', id: 'old_ruin_2', description: 'Standing as a grim monument on the edge of the market, these crumbling stones are all that remain of the old senate building, destroyed in the devastating "Senators\' Affair" that led to a bloody revolt years ago. The city tries to forget the tragedy, leaving the ruins overgrown and silent—a place of hushed secrets and a stark warning against challenging the court.' },
+            { x: 1018, y: 1074, label: 'The Fountain of Elders', id: 'fountain', description: 'The true center of the market square. All paths lead to this sculpted fountain, where water has flowed for generations. It is a natural meeting point for merchants, travelers, and locals alike—a place to rest one\'s feet, to see and be seen, and to listen to the undercurrent of gossip that flows as steadily as the water itself.' },
+            { x: 1369, y: 437, label: 'The Royal Court', id: 'royal_court', description: 'A bastion of order and law, the grand Royal Court stands as a symbol of the city\'s enduring power. Its ornate tiled plaza is patrolled by loyal guards, and its marble halls dispense the crown\'s justice. Yet, whispers in the market and the weary expressions of the guards themselves suggest that its principles may be more flexible than the stone from which it is built.' },
+            { x: 2728, y: 308, label: 'The Desmos Inn', id: 'desmos_inn', description: 'What was once a humble eatery owned by a foster family has been transformed by Robert Desmos into the city\'s most popular tavern. The Inn is more than a place for drink; it is the city\'s living memory. Every patron leaves a story behind, and Robert, the quiet keeper of these tales, forgets nothing.' },
+            { x: 605, y: 482, label: 'The Garden', id: 'garden', description: 'A peaceful garden where locals come to rest and reflect.' },
+            { x: 2052, y: 1299, label: 'The Moachivitis Market', id: 'moachivitis_market', description: 'The vibrant heart and soul of the city, built upon the agricultural wealth of the Moachivitis family. The air is thick with the scent of spices and the sound of a hundred conversations. Stalls overflow with goods from every corner of the land, and it is said that anything—or anyone—can be found here if one knows who to ask.' }
           ];
           let nearestBldg = null;
           let minBldgDist = Infinity;
@@ -342,9 +344,11 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
         const buildings = [
           { x: 1147, y: 700, label: 'Old Ruin 1', id: 'old_ruin_1' },
           { x: 1621, y: 700, label: 'Old Ruin 2', id: 'old_ruin_2' },
-          { x: 1014, y: 1071, label: 'Fountain', id: 'fountain' },
-          { x: 1369, y: 437, label: 'Royal Court', id: 'royal_court' },
-          { x: 2424, y: 230, label: 'Bartender House', id: 'bartender_house' }
+          { x: 1018, y: 1074, label: 'The Fountain of Elders', id: 'fountain' },
+          { x: 1369, y: 437, label: 'The Royal Court', id: 'royal_court' },
+          { x: 2728, y: 308, label: 'The Desmos Inn', id: 'desmos_inn' },
+          { x: 605, y: 482, label: 'The Garden', id: 'garden' },
+          { x: 2052, y: 1299, label: 'The Moachivitis Market', id: 'moachivitis_market' }
         ];
         
         const nearestBuilding = buildings.find(building => {
@@ -352,7 +356,8 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
         });
         
         if (nearestBuilding) {
-          onTalkRequest && onTalkRequest({ type: 'building', id: nearestBuilding.id, label: nearestBuilding.label });
+          console.log('Building interaction:', nearestBuilding);
+          onTalkRequest && onTalkRequest({ type: 'building', id: nearestBuilding.id, label: nearestBuilding.label, description: nearestBuilding.description });
         }
       }
     }
@@ -549,9 +554,11 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
             const markers = [
               { x: 1147, y: 700, label: 'Old Ruin 1', type: 'circle' },
               { x: 1621, y: 700, label: 'Old Ruin 2', type: 'circle' },
-              { x: 1014, y: 1071, label: 'Fountain', type: 'circle' },
-              { x: 1369, y: 437, label: 'Royal Court', type: 'circle' },
-              { x: 2424, y: 230, label: 'Bartender House', type: 'circle' }
+              { x: 1018, y: 1074, label: 'The Fountain of Elders', type: 'circle' },
+              { x: 1369, y: 437, label: 'The Royal Court', type: 'circle' },
+              { x: 2728, y: 308, label: 'The Desmos Inn', type: 'circle' },
+              { x: 605, y: 482, label: 'The Garden', type: 'circle' },
+              { x: 2052, y: 1299, label: 'The Moachivitis Market', type: 'circle' }
             ];
             return markers.map((marker, i) => {
               const distance = player ? dist([player.pos[0], player.pos[1]], [marker.x, marker.y]) : Infinity;

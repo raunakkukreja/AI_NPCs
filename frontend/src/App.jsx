@@ -38,6 +38,8 @@ export default function App() {
     } else if (typeof idOrObj === "object") {
       if (idOrObj.type === 'area') {
         setPanelSubject({ type: 'area', id: idOrObj.id });
+      } else if (idOrObj.type === 'building') {
+        setPanelSubject({ type: 'building', id: idOrObj.id, label: idOrObj.label, description: idOrObj.description });
       } else if (idOrObj.type === 'npc') {
         setCurrentNPC({ id: idOrObj.id, name: idOrObj.id });
         setChatVisible(true);

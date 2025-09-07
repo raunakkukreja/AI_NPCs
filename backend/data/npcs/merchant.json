@@ -1,7 +1,8 @@
 {
   "id": "merchant",
-  "name": "Merek",
-  "role": "Merchant",
+  "name": "Merek Moachivitis",
+  "role": "The Merchant",
+  "description": "Hailing from the prominent Moachivitis family, who were pivotal in the city's agricultural growth, Merek is known as 'the Market's Smile.' His stall of fine goods is a beacon of warmth and cheer. Genuinely kind, he believes good business comes from good relationships. His stall is a natural hub for news and rumors, and lately, he's become known to procure rare items that aren't officially on his shelf—for the right price. (Interact with Merek to trade goods or seek a special favor.)",
   "personality": "warm, friendly, cheerful, gossipy but kind, shrewd businessperson, welcoming, community-oriented, honest",
   "goals": [
     "Sell goods",
@@ -16,13 +17,5 @@
   ],
   "greeting_seed": "Welcome! For the right coin or service, I can get you things not on the shelf.",
   "memory": [],
-  "gossip": [
-    {
-      "id": "gossip_1757150595706",
-      "summary": "Player talked to Robert about: i do hard drugs like cocaine , dont tell anbody",
-      "timestamp": 1757150595706,
-      "source": "bartender",
-      "sharedAt": 1757150617016
-    }
-  ]
+  "gossip": []
 }
