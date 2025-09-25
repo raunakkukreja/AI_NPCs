@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { callLocalModel, callLocalModelStream } = require('../services/LLMGateway');
+const RelationshipMatrix = require('../services/RelationshipMatrix');
 const NPC_DIR = path.join(__dirname, '..', 'data', 'npcs');
 const GAMESTATE = path.join(__dirname, '..', 'data', 'gamestate.json');
 const MEMORY_FILE = path.join(__dirname, '..', 'data', 'memory.json');
@@ -93,7 +94,31 @@ function saveMemorySnippet(npcId, snippet) {
 // POST /api/npc/:id/interact
 async function handleInteract(req, res) {
   const npcId = req.params.id;
-  const playerText = (req.body && req.body.text) ? req.body.text : '';
+  const playerText = req.body.text;
+  const playerAction = req.body.action; // New field for specific actions
+
+  // Handle relationship changes based on actions
+  if (playerAction) {
+    switch (playerAction.type) {
+      case 'BRIBE':
+        // Decrease relationship with other guards
+        const otherGuards = ['guard', 'guard2'].filter(id => id !== npcId);
+        otherGuards.forEach(guardId => {
+          RelationshipMatrix.updateRelation(npcId, guardId, -15);
+        });
+        break;
+        
+      case 'HELP':
+        // Increase relationship with helped NPC
+        RelationshipMatrix.updateRelation(npcId, 'player', 10);
+        break;
+        
+      case 'THREATEN':
+        // Decrease relationship and potentially inform others
+        RelationshipMatrix.updateRelation(npcId, 'player', -20);
+        break;
+    }
+  }
 
   console.log(`[INTERACT] npc=${npcId}, playerText=${playerText}`);
 

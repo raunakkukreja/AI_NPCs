@@ -1,0 +1,13 @@
+{
+  "factionRelations": {},
+  "npcRelations": {},
+  "npcFactions": {
+    "guard": "COURT_LOYALISTS",
+    "guard2": "COURT_LOYALISTS",
+    "merchant": "MARKET_MERCHANTS",
+    "thief": "UNDERWORLD",
+    "bartender": "MARKET_MERCHANTS",
+    "helios": "UNDERWORLD",
+    "moody_old_man": "NEUTRAL"
+  }
+}

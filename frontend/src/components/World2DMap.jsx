@@ -53,6 +53,54 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
   const [gossipNetwork, setGossipNetwork] = useState({});
   const [showGossipGraph, setShowGossipGraph] = useState(true);
   const [sharingPairs, setSharingPairs] = useState([]);
+  const audioRef = useRef({
+    bg: null,
+    sfxInteract: null,
+    sfxSwish: null,
+    sfxStep: null,
+    footstepsInterval: null,
+    audioStarted: false
+  });
+
+  // Music on/off setting (persisted)
+  const [musicOn, setMusicOn] = useState(() => {
+    try {
+      const v = localStorage.getItem('musicOn');
+      return v === null ? true : v === 'true';
+    } catch (e) {
+      return true;
+    }
+  });
+
+  const DEBUG_MOVEMENT = true;
+
+  /* Movement and Audio Handlers */
+  const startFootsteps = useCallback(() => {
+    const a = audioRef.current;
+    if (a.footstepsInterval) return;
+    console.log("[Movement-Debug] Creating footsteps interval");
+    a.footstepsInterval = setInterval(() => {
+      try {
+        if (!a.sfxStep) return;
+        const stepSound = a.sfxStep.cloneNode();
+        stepSound.volume = 0.7;
+        stepSound.play().catch(err => {
+          console.warn("[Movement-Debug] Failed to play step:", err);
+        });
+      } catch (err) {
+        console.error("[Movement-Debug] Step sound error:", err);
+      }
+    }, 300);
+  }, []);
+
+  const stopFootsteps = useCallback(() => {
+    const a = audioRef.current;
+    if (a.footstepsInterval) {
+      clearInterval(a.footstepsInterval);
+      a.footstepsInterval = null;
+      console.log("[Movement-Debug] Cleared footsteps interval");
+    }
+  }, []);
 
   // Load map coordinates
   useEffect(() => {
@@ -66,11 +114,8 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
   useEffect(() => {
     const resetAndLoad = async () => {
       try {
-        // Reset all NPC data on page refresh
         await fetch('/api/reset', { method: 'POST' });
         console.log('NPC data reset on page load');
-        
-        // Load gossip network
         const response = await fetch('/api/gossip');
         if (response.ok) {
           const gossipData = await response.json();
@@ -80,7 +125,6 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
         console.error('Failed to reset/load:', err);
       }
     };
-    
     resetAndLoad();
     const interval = setInterval(async () => {
       try {
@@ -96,6 +140,153 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
     return () => clearInterval(interval);
   }, []);
 
+  // Audio initialization
+  useEffect(() => {
+    console.log("[Audio-Debug] Component mounted, starting audio setup");
+    const a = audioRef.current;
+
+    try {
+      a.bg = new Audio("/assets/bg_loop.mp3");
+      a.bg.addEventListener('ended', () => {
+        console.log("[Audio-Debug] BG music ended, restarting");
+        a.bg.currentTime = 0;
+        a.bg.play().catch(err => console.warn("[Audio-Debug] BG loop failed:", err));
+      });
+      a.bg.loop = true;
+      a.bg.volume = 0.5;
+      console.log("[Audio-Debug] BG music setup complete");
+    } catch(err) {
+      console.error("[Audio-Error] Audio initialization failed:", err);
+    }
+
+    const audioStates = { bg: false, interact: false, step: false };
+
+    try {
+      console.log("[Audio-Debug] Creating audio objects...");
+      a.sfxInteract = new Audio("/assets/sfx_interact.mp3");
+      a.sfxInteract.addEventListener('canplaythrough', () => {
+        console.log("[Audio-Debug] Interact sound loaded");
+        audioStates.interact = true;
+      });
+
+      a.sfxStep = new Audio("/assets/sfx_step.mp3");
+      a.sfxStep.addEventListener('canplaythrough', () => {
+        console.log("[Audio-Debug] Step sound loaded");
+        audioStates.step = true;
+      });
+
+      // Respect saved music preference when audio is ready
+      const applySavedMusicPref = () => {
+        const pref = (() => {
+          try { return localStorage.getItem('musicOn'); } catch (e) { return null; }
+        })();
+        const wantMusic = pref === null ? musicOn : (pref === 'true');
+        console.log("[Audio-Debug] Applying saved music preference:", wantMusic);
+        if (!wantMusic) {
+          if (a.bg) {
+            try {
+              a.bg.pause();
+              console.log("[Audio-Debug] BG paused due to saved preference");
+            } catch (e) { console.warn("[Audio-Debug] Pause failed:", e); }
+          }
+        } else {
+          // do not force play if browser blocks autoplay; startAudio user gesture will attempt play
+          console.log("[Audio-Debug] musicOn=true (will attempt autoplay on user gesture)");
+        }
+      };
+
+      // Attach small timeout to apply pref after objects created
+      setTimeout(applySavedMusicPref, 120);
+
+      // Start audio on user interaction
+      const startAudio = () => {
+        console.log("[Audio-Debug] User interaction detected, attempting to start audio");
+        if (a.audioStarted) {
+          console.log("[Audio-Debug] Audio already started, skipping");
+          return;
+        }
+
+        const wantMusic = (() => {
+          try { return localStorage.getItem('musicOn') !== 'false'; } catch (e) { return musicOn; }
+        })();
+
+        const tries = [];
+        if (wantMusic && a.bg) {
+          tries.push(a.bg.play().then(() => console.log("[Audio-Debug] BG play succeeded")).catch(e => console.warn("[Audio-Debug] BG autoplay failed:", e)));
+        } else {
+          console.log("[Audio-Debug] Not attempting BG play (music disabled)");
+        }
+
+        // test other sounds without leaving them playing
+        tries.push(a.sfxStep.play().then(() => { a.sfxStep.pause(); console.log("[Audio-Debug] Step sound test successful"); }).catch(e => console.warn("[Audio-Debug] Step sound test failed:", e)));
+        tries.push(a.sfxInteract.play().then(() => { a.sfxInteract.pause(); console.log("[Audio-Debug] Interact sound test successful"); }).catch(e => console.warn("[Audio-Debug] Interact sound test failed:", e)));
+
+        Promise.allSettled(tries).then(() => {
+          console.log("[Audio-Debug] Audio initialization attempts completed");
+          a.audioStarted = true;
+        });
+      };
+
+      window.addEventListener('click', startAudio);
+      window.addEventListener('keydown', startAudio);
+      console.log("[Audio-Debug] Added user interaction listeners");
+
+    } catch(err) {
+      console.error("[Audio-Error] Audio initialization failed:", err);
+    }
+
+    const debugInterval = setInterval(() => {
+      console.log("[Audio-Status]", {
+        bgExists: !!a.bg,
+        bgPlaying: !!a.bg && a.bg.paused === false,
+        interactExists: !!a.sfxInteract,
+        stepExists: !!a.sfxStep,
+        audioStarted: a.audioStarted,
+        musicOnSetting: (() => { try { return localStorage.getItem('musicOn'); } catch(e){ return 'err'; } })()
+      });
+    }, 5000);
+
+    return () => {
+      console.log("[Audio-Debug] Cleaning up audio resources");
+      clearInterval(debugInterval);
+      window.removeEventListener('click', () => {});
+      window.removeEventListener('keydown', () => {});
+      if (a.bg) {
+        a.bg.pause();
+        console.log("[Audio-Debug] BG music stopped");
+      }
+    };
+  }, [musicOn]);
+
+  // Keep audio state in sync when musicOn toggles
+  useEffect(() => {
+    console.log("[Audio-Debug] musicOn changed ->", musicOn);
+    try {
+      localStorage.setItem('musicOn', musicOn ? 'true' : 'false');
+    } catch (e) {
+      console.warn("[Audio-Debug] Could not persist musicOn:", e);
+    }
+    const a = audioRef.current;
+    if (a && a.bg) {
+      if (musicOn) {
+        a.bg.play().then(() => {
+          console.log("[Audio-Debug] BG play successful after toggle");
+        }).catch(err => {
+          console.warn("[Audio-Debug] BG play failed after toggle:", err);
+        });
+      } else {
+        try {
+          a.bg.pause();
+          console.log("[Audio-Debug] BG paused after toggle");
+        } catch (e) {
+          console.warn("[Audio-Debug] Pause failed after toggle:", e);
+        }
+      }
+    } else {
+      console.log("[Audio-Debug] audioRef.bg not ready yet, saved preference will be applied when ready");
+    }
+  }, [musicOn]);
+
   const updateEntityPos = useCallback((id, pos) => {
     setEntities(prev => prev.map(e => e.id === id ? { ...e, pos } : e));
   }, []);
@@ -105,21 +296,21 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
     function tick(now) {
       const dt = Math.min(0.1, (now - lastTimeRef.current) / 1000);
       lastTimeRef.current = now;
-      
+
       setEntities(prev => {
         const next = prev.map((ent, i) => {
           // Pause NPC if chatting
           if (ent.type === 'npc' && ent.id === pausedNPCId) {
             return ent;
           }
-          
+
           if (ent.type === 'npc' && ent.path && ent.path.length >= 2) {
             const meta = ent._meta || { idx: 0, t: 0, pauseUntil: 0 };
-            
+
             if (now < meta.pauseUntil) {
               return { ...ent, _meta: meta };
             }
-            
+
             const p0 = ent.path[meta.idx];
             const p1 = ent.path[(meta.idx + 1) % ent.path.length];
             const segDist = dist(p0, p1);
@@ -128,21 +319,21 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
             let t = meta.t + (advance / Math.max(1, segDist));
             let idx = meta.idx;
             let pauseUntil = meta.pauseUntil;
-            
+
             while (t >= 1.0) {
               t -= 1.0;
               idx = (idx + 1) % ent.path.length;
               pauseUntil = now + 5000;
             }
-            
+
             const newPos = lerpPos(ent.path[idx], ent.path[(idx + 1) % ent.path.length], t);
             return { ...ent, pos: newPos, _meta: { idx, t, pauseUntil } };
           }
-          
+
           if (ent.type === 'npc' && ent.bounds) {
             const meta = ent._meta || { target: null, changeTime: 0 };
             const speed = ent.speed || 30;
-            
+
             if (!meta.target || now > meta.changeTime) {
               const newTarget = [
                 meta.target ? ent.pos[0] + (Math.random() - 0.5) * 400 : ent.pos[0],
@@ -153,7 +344,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
               meta.target = newTarget;
               meta.changeTime = now + 2000 + Math.random() * 3000;
             }
-            
+
             const targetDist = dist(ent.pos, meta.target);
             if (targetDist > 5) {
               const dx = (meta.target[0] - ent.pos[0]) / targetDist;
@@ -166,7 +357,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
             }
             return { ...ent, _meta: meta };
           }
-          
+
           if (i !== playerIdx) return ent;
           const pos = ent.pos.slice();
           let dx = 0, dy = 0;
@@ -177,11 +368,25 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
             if (keys.current['KeyA'] || keys.current['ArrowLeft']) dx -= 1;
             if (keys.current['KeyD'] || keys.current['ArrowRight']) dx += 1;
           }
-          if (dx !== 0 || dy !== 0) {
+          const moving = dx !== 0 || dy !== 0;
+
+          // Add movement debugging
+          if (DEBUG_MOVEMENT && moving) {
+            console.log("[Movement-Debug] Player moving:", {
+              dx, dy,
+              hasStepSound: !!audioRef.current.sfxStep,
+              hasInterval: !!audioRef.current.footstepsInterval
+            });
+          }
+
+          if (moving) {
             const len = Math.hypot(dx,dy) || 1;
             const move = (playerSpeed * dt);
             pos[0] += (dx/len) * move;
             pos[1] += (dy/len) * move;
+            startFootsteps();
+          } else {
+            stopFootsteps();
           }
           pos[0] = Math.min(Math.max(10, pos[0]), MAP_W - 10);
           pos[1] = Math.min(Math.max(10, pos[1]), MAP_H - 10);
@@ -200,12 +405,12 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
           const newCameraX = Math.max(0, Math.min(player.pos[0] - screenW/2, MAP_W - screenW));
           const newCameraY = Math.max(0, Math.min(player.pos[1] - screenH/2, MAP_H - screenH));
           setCameraPos([newCameraX, newCameraY]);
-          
+
           // Find nearest point
           const points = mapCoordinates.layers?.[0]?.objects?.filter(obj => obj.point) || [];
           let nearest = null;
           let minDist = Infinity;
-          
+
           points.forEach(point => {
             const distance = dist([player.pos[0], player.pos[1]], [point.x, point.y]);
             if (distance < 80 && distance < minDist) {
@@ -213,9 +418,9 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
               nearest = point;
             }
           });
-          
+
           setNearestPoint(nearest);
-          
+
           // Find nearest building marker
           const buildings = [
             { x: 1147, y: 700, label: 'Old Ruin 1', id: 'old_ruin_1', description: 'Standing as a grim monument on the edge of the market, these crumbling stones are all that remain of the old senate building, destroyed in the devastating "Senators\' Affair" that led to a bloody revolt years ago. The city tries to forget the tragedy, leaving the ruins overgrown and silent—a place of hushed secrets and a stark warning against challenging the court.' },
@@ -228,7 +433,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
           ];
           let nearestBldg = null;
           let minBldgDist = Infinity;
-          
+
           buildings.forEach(building => {
             const distance = dist([player.pos[0], player.pos[1]], [building.x, building.y]);
             if (distance < 80 && distance < minBldgDist) {
@@ -236,18 +441,18 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
               nearestBldg = building;
             }
           });
-          
+
           setNearestBuilding(nearestBldg);
-          
+
           // Handle gossip spreading between NPCs
           const npcs = current.filter(ent => ent.type === 'npc');
           const newSharingPairs = [];
-          
+
           npcs.forEach((npc1, i) => {
             npcs.forEach((npc2, j) => {
               if (i !== j && dist(npc1.pos, npc2.pos) < 100) {
                 newSharingPairs.push([npc1.id, npc2.id]);
-                
+
                 // Trigger gossip sharing on backend
                 fetch('/api/gossip/share', {
                   method: 'POST',
@@ -257,7 +462,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
               }
             });
           });
-          
+
           setSharingPairs(newSharingPairs);
         }
         return current;
@@ -267,7 +472,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
     }
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playerIdx, updateEntityPos, playerSpeed, pausedNPCId]);
+  }, [playerIdx, updateEntityPos, playerSpeed, pausedNPCId, chatVisible]);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -286,7 +491,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
     setClickedCoords({ x: Math.round(x), y: Math.round(y) });
     setTimeout(() => setClickedCoords(null), 3000);
   };
-  
+
   const handleMouseDown = (e) => {
     if (e.shiftKey) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -298,7 +503,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
       setDrawnRect(null);
     }
   };
-  
+
   const handleMouseMove = (e) => {
     if (drawing) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -307,7 +512,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
       setDrawEnd([x, y]);
     }
   };
-  
+
   const handleMouseUp = () => {
     if (drawing && drawStart && drawEnd) {
       const minX = Math.min(drawStart[0], drawEnd[0]);
@@ -321,13 +526,28 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
     setDrawStart(null);
     setDrawEnd(null);
   };
-  
+
   useEffect(() => {
     function onKeyDown(e) {
       if (e.code === "KeyX") {
+        console.log("[Audio-Debug] X key pressed");
+        try {
+          if (audioRef.current.sfxInteract) {
+            console.log("[Audio-Debug] Playing interact sound");
+            audioRef.current.sfxInteract.currentTime = 0;
+            audioRef.current.sfxInteract.play()
+              .then(() => console.log("[Audio-Debug] Interact sound played successfully"))
+              .catch(err => console.warn("[Audio-Debug] Interact sound failed:", err));
+          } else {
+            console.warn("[Audio-Debug] Interact sound not initialized");
+          }
+        } catch(err) {
+          console.error("[Audio-Debug] Error playing interact sound:", err);
+        }
+
         const player = entities[playerIdx];
         if (!player) return;
-        
+
         // Check NPCs first
         let nearestEnt = null, best = Infinity;
         entities.forEach(ent => {
@@ -339,7 +559,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
           onTalkRequest && onTalkRequest(nearestEnt.id);
           return;
         }
-        
+
         // Check building markers
         const buildings = [
           { x: 1147, y: 700, label: 'Old Ruin 1', id: 'old_ruin_1' },
@@ -350,28 +570,37 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
           { x: 605, y: 482, label: 'The Garden', id: 'garden' },
           { x: 2052, y: 1299, label: 'The Moachivitis Market', id: 'moachivitis_market' }
         ];
-        
+
         const nearestBuilding = buildings.find(building => {
           return dist([building.x, building.y], player.pos) <= 80;
         });
-        
+
         if (nearestBuilding) {
           console.log('Building interaction:', nearestBuilding);
           onTalkRequest && onTalkRequest({ type: 'building', id: nearestBuilding.id, label: nearestBuilding.label, description: nearestBuilding.description });
         }
       }
     }
-    
+
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [entities, playerIdx, onTalkRequest]);
+
+  // Settings toggle handler
+  const toggleMusic = (evt) => {
+    evt.stopPropagation();
+    const next = !musicOn;
+    console.log("[Audio-Settings] toggling music ->", next);
+    setMusicOn(next);
+    // persistence done in effect
+  };
 
   return (
     <div ref={containerRef} className="world2d-viewport" style={{ width: "100%", height: "100vh", overflow: "hidden", position: "relative", cursor: drawing ? 'crosshair' : 'default' }} onDoubleClick={handleDoubleClick} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
       <div className="world2d-inner" style={{
         width: MAP_W, height: MAP_H,
-        position: 'relative', 
-        left: -cameraPos[0], 
+        position: 'relative',
+        left: -cameraPos[0],
         top: -cameraPos[1],
         transition: 'left 0.1s ease, top 0.1s ease'
       }}>
@@ -418,7 +647,6 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
                   fill="white"
                   fontSize="12"
                   fontWeight="bold"
-                  textShadow="1px 1px 2px rgba(0,0,0,0.8)"
                 >
                   {area.name}
                 </text>
@@ -445,7 +673,6 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
                     fill="white"
                     fontSize="11"
                     fontWeight="bold"
-                    textShadow="1px 1px 2px rgba(0,0,0,0.8)"
                   >
                     {point.name}
                   </text>
@@ -459,16 +686,16 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
         {entities.map(ent => {
           const isPlayer = ent.type === 'player';
           const size = isPlayer ? 86 : 80;
-          
+
           const player = entities[playerIdx];
           const npcDistance = player ? dist([player.pos[0], player.pos[1]], [ent.pos[0], ent.pos[1]]) : Infinity;
           const isNearNPC = npcDistance <= 80;
-          
+
           // Check if this NPC is sharing gossip with another NPC
-          const isSharing = !isPlayer && entities.some(other => 
+          const isSharing = !isPlayer && entities.some(other =>
             other.type === 'npc' && other.id !== ent.id && dist(ent.pos, other.pos) < 100
           );
-          
+
           const getEntityImage = (id) => {
             if (id === 'player') return 'assets/nico.png';
             if (id === 'guard' || id === 'guard2') return 'assets/guard_female.png';
@@ -481,16 +708,16 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
             if (id === 'woman_2') return 'assets/woman_2.png';
             return null;
           };
-          
+
           const entityImage = getEntityImage(ent.id);
-          
+
           let filterEffect = "none";
           if (!isPlayer && isNearNPC) {
             filterEffect = "drop-shadow(0 0 30px rgba(255,215,0,1)) drop-shadow(0 0 60px rgba(255,215,0,0.6))";
           } else if (isSharing) {
             filterEffect = "drop-shadow(0 0 20px rgba(128,0,128,1)) drop-shadow(0 0 40px rgba(128,0,128,0.6))";
           }
-          
+
           return (
             <div key={ent.id} style={{ position: 'absolute', left: ent.pos[0] - size/2, top: ent.pos[1] - size/2 }}>
               {isPlayer && (
@@ -538,7 +765,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
             </div>
           );
         })
-       }
+        }
         {/* Additional markers */}
         <svg style={{
           position: 'absolute',
@@ -563,8 +790,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
             return markers.map((marker, i) => {
               const distance = player ? dist([player.pos[0], player.pos[1]], [marker.x, marker.y]) : Infinity;
               const isNear = distance <= 80;
-              const glow = isNear ? "0 0 18px 6px rgba(255,215,0,0.8)" : "none";
-              
+
               return (
                 <g key={i}>
                   <circle
@@ -583,7 +809,6 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
                       fill="white"
                       fontSize="12"
                       fontWeight="bold"
-                      textShadow="1px 1px 2px rgba(0,0,0,0.8)"
                     >
                       {marker.label}
                     </text>
@@ -612,7 +837,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
             Press X to interact with {nearestBuilding.label}
           </div>
         )}
-        
+
         {/* Drawing rectangle */}
         {drawing && drawStart && drawEnd && (
           <div style={{
@@ -627,7 +852,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
             pointerEvents: 'none'
           }} />
         )}
-        
+
         {/* Drawn rectangle with coordinates */}
         {drawnRect && (
           <>
@@ -642,7 +867,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
               zIndex: 100,
               pointerEvents: 'none'
             }} />
-            <div 
+            <div
               onClick={() => {
                 const coords = `(${Math.round(drawnRect.x)}, ${Math.round(drawnRect.y)}) to (${Math.round(drawnRect.x + drawnRect.w)}, ${Math.round(drawnRect.y + drawnRect.h)})`;
                 navigator.clipboard.writeText(coords);
@@ -671,9 +896,9 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
         )}
 
       </div>
-      
+
       {/* Minimap */}
-      <div style={{
+      <div className="minimap-box" style={{
         position: 'fixed',
         top: '10px',
         left: '10px',
@@ -705,6 +930,20 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
             strokeWidth="4"
           />
         </svg>
+
+        {/* Settings button (music toggle) */}
+        <button
+          className={`minimap-settings-btn ${musicOn ? 'on' : 'off'}`}
+          onClick={toggleMusic}
+          title={musicOn ? "Music: On (click to mute)" : "Music: Off (click to enable)"}
+          aria-pressed={musicOn}
+        >
+          {/* simple inline gear icon (SVG) */}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06A2 2 0 012.28 16.9l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09c.7 0 1.32-.4 1.51-1a1.65 1.65 0 00-.33-1.82L4.3 4.28A2 2 0 016.13 1.45l.06.06a1.65 1.65 0 001.82.33c.7-.3 1.51-.3 2.2 0L12 4.6l1.79-1.52c.69-.3 1.5-.3 2.2 0 .7.3 1.1 1.07.8 1.77l-.33 1.82c.18.6.8 1 1.51 1H21a2 2 0 110 4h-.09c-.7 0-1.32.4-1.51 1z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </div>
 
       {/* Gossip Network Graph */}
@@ -726,19 +965,19 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
           <div style={{ color: 'white', fontSize: '14px', marginBottom: '12px', fontWeight: '600' }}>
             Gossip Network
           </div>
-          
+
           <div style={{ color: '#94a3b8', fontSize: '11px', marginBottom: '16px', lineHeight: '1.4' }}>
             Total Gossip: {Object.values(gossipNetwork).reduce((sum, arr) => sum + arr.length, 0)}<br/>
             Active Shares: {sharingPairs.length}
           </div>
-          
+
           <svg width="268" height="160" style={{ marginBottom: '12px' }}>
             {entities.filter(ent => ent.type === 'npc').map((npc, i) => {
               const x = 35 + (i % 4) * 60;
               const y = 35 + Math.floor(i / 4) * 50;
               const hasGossip = gossipNetwork[npc.id] && gossipNetwork[npc.id].length > 0;
               const isSharing = sharingPairs.some(pair => pair.includes(npc.id));
-              
+
               return (
                 <g key={npc.id}>
                   <circle
@@ -775,7 +1014,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
               );
             })}
           </svg>
-          
+
           <button
             onClick={() => setShowGossipGraph(false)}
             style={{

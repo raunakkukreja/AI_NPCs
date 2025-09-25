@@ -2,9 +2,20 @@
   "time": "evening",
   "weather": "rainy",
   "player": {
-    "name": "Arin",
-    "reputation": "trusted",
-    "inventory": []
+    "name": "Nico Stavrakos",
+    "stats": {
+      "strength": 10,
+      "stamina": 10,
+      "knowledge": 10,
+      "reputation": "neutral",
+      "activeBuffs": []
+    },
+    "habitStats": {
+      "lastUpdate": null,
+      "dailySteps": 0,
+      "activeMinutes": 0,
+      "studyMinutes": 0
+    }
   },
   "location": "tavern",
   "activeQuests": ["Find the Lost Key"]

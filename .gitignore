@@ -1,0 +1,11 @@
+# Ignore local model server configuration
+model_server/model_server.py
+
+# You might also want to ignore model files if you're not tracking them
+# *.gguf 
+# .cache/
+# frontend/node_modules/.vite/deps/_metadata.json # This one is tricky, often generated
+# Ignore Vite/Node.js cache and dependencies
+node_modules/
+frontend/node_modules/
+.vite/

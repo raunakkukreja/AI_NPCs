@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mission Report</title>
+  <link rel="stylesheet" href="src/styles.css">
+  <style>
+    body { background: #0d1117; color: #c9d1d9; font-family: sans-serif; }
+    .report-screen-container { min-height: 100vh; }
+    .report-screen-box { margin: 40px auto; }
+  </style>
+</head>
+<body>
+  <div class="report-screen-container">
+    <div class="report-screen-box" id="report-box">
+      <h1>Mission Report</h1>
+      <h2>Intel Gathered:</h2>
+      <ul id="intel-list"></ul>
+      <h2 style="margin-top:2em;">Gossip Spread:</h2>
+      <ul id="gossip-list"></ul>
+      <button class="restart-button" onclick="window.close()">Close Report</button>
+    </div>
+  </div>
+  <script>
+    // Load player interactions
+    const intelList = document.getElementById('intel-list');
+    let interactions = [];
+    try {
+      interactions = JSON.parse(localStorage.getItem('playerInteractions') || '[]');
+    } catch {}
+    if (interactions.length === 0) {
+      intelList.innerHTML = '<li>No interactions recorded.</li>';
+    } else {
+      interactions.forEach(i => {
+        const li = document.createElement('li');
+        li.innerHTML = `Talked to <b>${i.npcId}</b>: <span style="color:#7dd3fc">${i.playerMessage}</span>`;
+        intelList.appendChild(li);
+      });
+    }
+
+    // Load gossip network and summarize spread
+    const gossipList = document.getElementById('gossip-list');
+    let gossipNetwork = {};
+    try {
+      gossipNetwork = JSON.parse(localStorage.getItem('gossipNetwork') || '{}');
+    } catch {}
+    const gossipSummary = [];
+    if (gossipNetwork && Object.keys(gossipNetwork).length > 0) {
+      Object.entries(gossipNetwork).forEach(([npc, gossips]) => {
+        gossips.forEach(g => {
+          if (g.source && g.source !== npc) {
+            gossipSummary.push(`${g.source} shared gossip with ${npc}`);
+          }
+        });
+      });
+    }
+    const uniqueGossip = [...new Set(gossipSummary)];
+    if (uniqueGossip.length === 0) {
+      gossipList.innerHTML = '<li>No gossip has spread yet.</li>';
+    } else {
+      uniqueGossip.forEach(line => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        gossipList.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>

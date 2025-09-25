@@ -4,9 +4,11 @@ import World2DMap from "./components/World2DMap";
 import ChatBox from "./components/ChatBox";
 import NPCCard from "./components/NPCCard";
 import { interact } from "./api";
+import ReportScreen from "./components/ReportScreen";
 
 export default function App() {
   const [showTutorial, setShowTutorial] = useState(true);
+  const [showReport, setShowReport] = useState(false);
   const [currentNPC, setCurrentNPC] = useState(null);
   const [chatVisible, setChatVisible] = useState(false);
   const [lastDialogue, setLastDialogue] = useState("");
@@ -73,6 +75,18 @@ export default function App() {
     }
   };
 
+  const handleShowReport = () => {
+    setShowReport(true);
+  };
+
+  const handleHideReport = () => {
+    setShowReport(false);
+  };
+
+  if (showReport) {
+    return <ReportScreen onHideReport={handleHideReport} playerInteractions={playerInteractions} />;
+  }
+
   return (
     <div className="app">
       {showTutorial && (
@@ -93,7 +107,7 @@ export default function App() {
 
       {/* Map area */}
       <div className="canvas-wrap">
-        <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} playerInteractions={playerInteractions} chatVisible={chatVisible} />
+        <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} playerInteractions={playerInteractions} chatVisible={chatVisible} onShowReport={handleShowReport} />
       </div>
 
       {/* Info panel */}

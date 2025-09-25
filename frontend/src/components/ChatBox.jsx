@@ -15,6 +15,26 @@ export default function ChatBox({ npc, onSend, onClose, history }) {
   const [localHistory, setLocalHistory] = useState(() => (Array.isArray(history) ? history.slice() : []));
   const [isTyping, setIsTyping] = useState(false);
   const historyRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Add audio ref
+  const audioRef = useRef({
+    sfxSwish: null,
+    sfxType: null
+  });
+
+  // Initialize audio and auto-focus input
+  useEffect(() => {
+    audioRef.current.sfxSwish = new Audio("/assets/sfx_npc_swish.mp3");
+    audioRef.current.sfxSwish.volume = 0.9;
+    
+    console.log("[Audio] ChatBox audio objects initialized:", {
+      sfxSwish: audioRef.current.sfxSwish
+    });
+    
+    // Auto-focus input when chat opens
+    setTimeout(() => inputRef.current && inputRef.current.focus(), 80);
+  }, []);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -23,7 +43,7 @@ export default function ChatBox({ npc, onSend, onClose, history }) {
     }
   }, [localHistory]);
 
-  // Only update localHistory if a *different* history prop is provided
+  // History sync effect
   useEffect(() => {
     if (Array.isArray(history)) {
       const same =
@@ -34,8 +54,7 @@ export default function ChatBox({ npc, onSend, onClose, history }) {
         setLocalHistory(history.slice());
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history]);
+  }, [history, localHistory.length]);
 
   const handleSend = async () => {
     const text = (input || "").trim();
@@ -53,6 +72,19 @@ export default function ChatBox({ npc, onSend, onClose, history }) {
       await interactStream(npc?.id, text, (chunk) => {
         if (chunk.choices?.[0]?.delta?.content) {
           const content = chunk.choices[0].delta.content;
+          
+          // Play swish sound on first character of response
+          if (streamingMsg.text === "") {
+            try {
+              console.log("[Audio] Playing NPC response swish sound");
+              audioRef.current.sfxSwish.cloneNode().play().catch((e) => {
+                console.log("[Audio] Failed to play swish sound:", e);
+              });
+            } catch (e) {
+              console.error("[Audio] Error playing swish sound:", e);
+            }
+          }
+          
           setLocalHistory((prev) => {
             const newHistory = [...prev];
             const lastMsg = newHistory[newHistory.length - 1];
@@ -115,6 +147,7 @@ export default function ChatBox({ npc, onSend, onClose, history }) {
 
       <div className="chatbox-input">
         <input
+          ref={inputRef}
           className="game-input"
           placeholder="Speak to the NPC..."
           value={input}
