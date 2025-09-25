@@ -4,6 +4,7 @@ import World2D from "./components/World2D";
 import ChatBox from "./components/ChatBox";
 import NPCCard from "./components/NPCCard";
 import { interact } from "./api";
+import { useWeather } from "./hooks/useWeather";
 
 export default function App() {
   const [showTutorial, setShowTutorial] = useState(true);
@@ -11,6 +12,21 @@ export default function App() {
   const [chatVisible, setChatVisible] = useState(false);
   const [lastDialogue, setLastDialogue] = useState("");
   const [panelSubject, setPanelSubject] = useState(null);
+<<<<<<< Updated upstream
+=======
+  const [pausedNPCId, setPausedNPCId] = useState(null);
+  const [playerInteractions, setPlayerInteractions] = useState([]);
+  
+  // Weather-based background
+  const { weatherData, backgroundSaturation, warmColorFilter, hueRotation } = useWeather();
+  
+  // Debug: log weather changes
+  useEffect(() => {
+    if (!weatherData.loading && weatherData.temperature !== 20) {
+      console.log(`�️ WEATHER EFFECT: ${weatherData.temperature}°C | Sat: ${backgroundSaturation.toFixed(2)}x | Sepia: ${warmColorFilter.toFixed(2)} | Hue: ${hueRotation.toFixed(1)}°`);
+    }
+  }, [weatherData.temperature, backgroundSaturation, warmColorFilter, hueRotation]);
+>>>>>>> Stashed changes
 
   // listen for small "distance hint" events from the world (optional)
   useEffect(() => {
@@ -69,8 +85,41 @@ export default function App() {
       )}
 
       {/* Map area */}
+<<<<<<< Updated upstream
       <div className="canvas-wrap">
         <World2D onTalkRequest={handleTalkRequest} />
+=======
+      <div 
+        className="canvas-wrap"
+        style={{
+          filter: `saturate(${backgroundSaturation}) hue-rotate(${hueRotation}deg)`,
+          '--rain-opacity': weatherData.rainIntensity || 0,
+          '--cloud-opacity': (weatherData.cloudIntensity || 0) * 0.3,
+          '--snow-opacity': weatherData.conditions?.isSnowy ? 0.6 : 0
+        }}
+      >
+        {/* Weather Effects Overlay */}
+        <div className="weather-overlay">
+          {/* Rain Effect */}
+          {weatherData.conditions?.isRainy && (
+            <div 
+              className={`rain-effect ${(weatherData.rainIntensity || 0) > 0.7 ? 'heavy-rain-effect' : ''}`}
+            />
+          )}
+          
+          {/* Cloud Effect */}
+          {weatherData.conditions?.isCloudy && (
+            <div className="cloud-effect" />
+          )}
+          
+          {/* Snow Effect */}
+          {weatherData.conditions?.isSnowy && (
+            <div className="snow-effect" />
+          )}
+        </div>
+        
+        <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} playerInteractions={playerInteractions} chatVisible={chatVisible} />
+>>>>>>> Stashed changes
       </div>
 
       {/* Info panel */}

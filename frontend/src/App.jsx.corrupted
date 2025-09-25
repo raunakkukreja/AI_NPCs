@@ -1,0 +1,142 @@
+// frontend/src/App.  /  // Debug: log weather changes
+  useEffect(() => {
+    if (!weatherData.loading && weatherData.temperature !== 20) {
+      console.log(`🌡️ WEATHER EFFECT: ${weatherData.temperature}°C | Sat: ${backgroundSaturation.toFixed(2)}x | Hue: ${hueRotation.toFixed(1)}° | Blue: ${blueEnhancement.toFixed(2)}`);
+    }
+  }, [weatherData.temperature, backgroundSaturation, warmColorFilter, hueRotation, blueEnhancement]);g: log weather changes
+  useEffect(() => {
+    if (!weatherData.loading && weatherData.temperature !== 20) {
+      console.log(`🌡️ WEATHER EFFECT: ${weatherData.temperature}°C | Sat: ${backgroundSaturation.toFixed(2)}x | Hue: ${hueRotation.toFixed(1)}° | Blue: ${blueEnhancement.toFixed(2)}`);
+    }mport React, { useState, useEffect } from "react";
+import World2DMap from "./components/World2DMap";
+import ChatBox from "./components/ChatBox";
+import NPCCard from "./components/NPCCard";
+import { interact } from "./api";
+import { useWeather } from "./hooks/useWeather";
+
+export default function App() {
+  const [showTutorial, setShowTutorial] = useState(true);
+  const [currentNPC, setCurrentNPC] = useState(null);
+  const [chatVisible, setChatVisible] = useState(false);
+  const [lastDialogue, setLastDialogue] = useState("");
+  const [panelSubject, setPanelSubject] = useState(null);
+  const [pausedNPCId, setPausedNPCId] = useState(null);
+  const [playerInteractions, setPlayerInteractions] = useState([]);
+  
+  // Weather-based background
+  const { weatherData, backgroundSaturation, warmColorFilter, hueRotation, blueEnhancement } = useWeather();
+  
+  // Debug: log weather changes
+  useEffect(() => {
+    if (!weatherData.loading && weatherData.temperature !== 20) {
+      console.log(`�️ WEATHER EFFECT: ${weatherData.temperature}°C | Sat: ${backgroundSaturation.toFixed(2)}x | Sepia: ${warmColorFilter.toFixed(2)} | Hue: ${hueRotation.toFixed(1)}°`);
+    }
+  }, [weatherData.temperature, backgroundSaturation, warmColorFilter, hueRotation]);
+
+  // listen for small "distance hint" events from the world (optional)
+  useEffect(() => {
+    function onFail(e) {
+      const d = e.detail?.distance ?? 999;
+      // show a tiny in-UI hint (we set lastDialogue)
+      if (d > 2.2) setLastDialogue("You are too far from an NPC to interact (move closer).");
+    }
+    window.addEventListener("game-interact-failed", onFail);
+    return () => window.removeEventListener("game-interact-failed", onFail);
+  }, []);
+
+  // replace handleTalkRequest with:
+  const handleTalkRequest = async (idOrObj) => {
+    console.log("[APP] talk request for", idOrObj);
+    if (!idOrObj) return;
+    if (typeof idOrObj === "string") {
+      setCurrentNPC({ id: idOrObj, name: idOrObj });
+      setChatVisible(true);
+      setLastDialogue("");
+      setPanelSubject({ type: 'npc', id: idOrObj });
+      setPausedNPCId(idOrObj); // Pause NPC
+    } else if (typeof idOrObj === "object") {
+      if (idOrObj.type === 'area') {
+        setPanelSubject({ type: 'area', id: idOrObj.id });
+      } else if (idOrObj.type === 'building') {
+        setPanelSubject({ type: 'building', id: idOrObj.id, label: idOrObj.label, description: idOrObj.description });
+      } else if (idOrObj.type === 'npc') {
+        setCurrentNPC({ id: idOrObj.id, name: idOrObj.id });
+        setChatVisible(true);
+        setPanelSubject({ type: 'npc', id: idOrObj.id });
+        setPausedNPCId(idOrObj.id); // Pause NPC
+      }
+    }
+  };
+
+  const handleSendToNPC = async (text) => {
+    if (!currentNPC) throw new Error("No NPC selected");
+    console.log("[APP] sending to", currentNPC.id, "text:", text);
+    try {
+      const res = await interact(currentNPC.id, text);
+      console.log("[APP] received response:", res);
+      
+      // Add to player interactions for gossip network
+      const interaction = {
+        npcId: currentNPC.id,
+        playerMessage: text,
+        npcResponse: res.dialogue,
+        summary: `Player talked about: ${text.substring(0, 50)}...`,
+        timestamp: Date.now()
+      };
+      setPlayerInteractions(prev => [...prev, interaction]);
+      
+      return res;
+    } catch (err) {
+      console.error("[APP] interact error:", err);
+      throw err;
+    }
+  };
+
+  return (
+    <div className="app">
+      {showTutorial && (
+        <div className="tutorial">
+          <h3>Mission: First Dawn in Piraeus</h3>
+          <p>You are Nico Stavrakos, the secret, bastard son of the King of Athens. While the rightful heirs live in luxury, you have been raised in the shadows, trained in the arts of manipulation, combat, and deception.</p>
+          <p>Now, your time has come. On the command of a rival faction in Athens, you have been sent undercover to the city of Piraeus. Your mission: infiltrate the Royal Court and uncover the secrets that protect its power.</p>
+          <p>Every conversation is a test, every alliance a potential stepping stone. Your ultimate goal is not just knowledge, but the throne you believe is your birthright. Build your network, gather intelligence, and formulate a long-term strategy to one day overthrow the king.</p>
+          <p>The city is alive with stories. Your journey begins now. Good luck.</p>
+          <div style={{marginTop: '16px', padding: '12px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px'}}>
+            <strong>Controls:</strong><br/>
+            <strong>WASD:</strong> Navigate the city<br/>
+            <strong>X:</strong> Interact with people and landmarks
+          </div>
+          <button onClick={() => setShowTutorial(false)}>Begin Mission</button>
+        </div>
+      )}
+
+      {/* Map area */}
+      <div 
+        className="canvas-wrap"
+        style={{
+          filter: `saturate(${backgroundSaturation}) hue-rotate(${hueRotation}deg)`
+        }}
+      >
+        <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} playerInteractions={playerInteractions} chatVisible={chatVisible} />
+      </div>
+
+      {/* Info panel */}
+      <div className="ui-panel">
+        <h2>Living Worlds — Prototype</h2>
+        <p>{lastDialogue}</p>
+        <NPCCard subject={panelSubject} />
+      </div>
+
+      {chatVisible && currentNPC && (
+        <ChatBox
+          npc={currentNPC}
+          onClose={() => {
+            setChatVisible(false);
+            setPausedNPCId(null); // Resume NPC
+          }}
+          onSend={handleSendToNPC}
+        />
+      )}
+    </div>
+  );
+}
