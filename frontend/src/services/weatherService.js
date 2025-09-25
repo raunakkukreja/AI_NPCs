@@ -5,7 +5,7 @@ const WEATHER_API_BASE_URL = 'https://api.weatherapi.com/v1';
 
 // 🧪 WEATHER TESTING CONFIGURATION
 const WEATHER_TEST_CONFIG = {
-  enabled: true,  // Set to false to use real weather
+  enabled: false,  // Set to false to use real weather
   temperature: 15,  // Change this value to test different temperatures
   condition: 'Snow' // 👈 CHANGE THIS FOR DIFFERENT EFFECTS
 };
