@@ -933,16 +933,37 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
 
         {/* Settings button (music toggle) */}
         <button
-          className={`minimap-settings-btn ${musicOn ? 'on' : 'off'}`}
+          className="minimap-settings-btn"
           onClick={toggleMusic}
           title={musicOn ? "Music: On (click to mute)" : "Music: Off (click to enable)"}
-          aria-pressed={musicOn}
+          style={{
+            position: 'absolute',
+            right: '10px',
+            bottom: '10px',
+            background: 'rgba(0, 0, 0, 0.6)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '6px',
+            padding: '4px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            transition: 'all 0.2s ease'
+          }}
         >
-          {/* simple inline gear icon (SVG) */}
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06A2 2 0 012.28 16.9l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09c.7 0 1.32-.4 1.51-1a1.65 1.65 0 00-.33-1.82L4.3 4.28A2 2 0 016.13 1.45l.06.06a1.65 1.65 0 001.82.33c.7-.3 1.51-.3 2.2 0L12 4.6l1.79-1.52c.69-.3 1.5-.3 2.2 0 .7.3 1.1 1.07.8 1.77l-.33 1.82c.18.6.8 1 1.51 1H21a2 2 0 110 4h-.09c-.7 0-1.32.4-1.51 1z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <img 
+            src="/assets/mute.png" 
+            alt={musicOn ? "Mute" : "Unmute"}
+            style={{
+              width: '20px',
+              height: '20px',
+              opacity: musicOn ? 0.6 : 1,
+              transform: musicOn ? 'scale(0.9)' : 'scale(1)',
+              transition: 'all 0.2s ease'
+            }}
+          />
         </button>
       </div>
 

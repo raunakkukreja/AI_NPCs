@@ -417,8 +417,12 @@ body, html, #root { height: 100%; margin: 0; font-family: Arial, sans-serif; }
 }
 
 .minimap-settings-btn:hover {
-  transform: translateY(-2px);
-  background: rgba(255,255,255,0.04);
+  background: rgba(0, 0, 0, 0.8) !important;
+  transform: scale(1.05);
+}
+
+.minimap-settings-btn:hover img {
+  opacity: 1 !important;
 }
 
 .minimap-settings-btn.on {
@@ -635,7 +639,8 @@ body, html, #root { height: 100%; margin: 0; font-family: Arial, sans-serif; }
   opacity: 0.5;
   cursor: not-allowed;
 }
-// Add to your styles.css file
+
+/* Walking animation */
 .walking {
   animation: bounce 0.36s infinite alternate;
 }
