@@ -2,21 +2,30 @@
 
 An interactive game featuring AI-powered NPCs with dynamic weather effects.
 
-## New Feature: Weather-Based Visual Effects
+## New Feature: Dynamic Weather System
 
-The game now includes real-time weather effects that change the visual appearance of the map based on current temperature data from WeatherAPI.com.
+The game now includes a comprehensive real-time weather system with visual effects and animations based on current weather conditions from WeatherAPI.com.
 
-### Weather Effects
+### Weather Conditions & Effects
 
-**Hot Weather (≥25°C):**
-- 25-29°C: Subtle yellow tint, slightly brighter
-- 30-34°C: More pronounced yellow, increased brightness  
-- 35°C+: Intense yellow-orange, very bright and saturated
+**🌞 Clear Weather:** Temperature-based lighting (warm yellow to cool blue tints)
 
-**Cold Weather (<25°C):**
-- 15-24°C: Neutral with very slight blue tint
-- 5-14°C: Blue tint, reduced saturation and brightness
-- <5°C: Strong blue tint, very dull and desaturated
+**☁️ Cloudy Weather:** Gentle cloud animations, reduced brightness  
+
+**🌫️ Overcast Weather:** Dark gray overlay, gloomy atmosphere
+
+**🌧️ Rainy Weather:** Animated raindrops, blue tint, moody lighting
+
+**⛈️ Stormy Weather:** Heavy rain + lightning flashes, dramatic effects
+
+**❄️ Snowy Weather:** Floating snowflakes, bright desaturated visuals
+
+**🌫️ Foggy Weather:** Drifting fog particles, reduced visibility
+
+### Temperature Effects
+
+**Hot Weather (≥25°C):** Yellow/orange tints, bright sunny atmosphere
+**Cold Weather (<25°C):** Blue tints, dull cold atmosphere
 
 ### Setup
 
@@ -30,13 +39,15 @@ The game now includes real-time weather effects that change the visual appearanc
    ```
    VITE_WEATHER_TEST_MODE=true
    VITE_TEST_TEMPERATURE=30
+   VITE_TEST_CONDITION=rain
    ```
 
 ### Testing Weather Effects
 
-- **Test Panel**: Press `Ctrl+W` in-game to open the weather test panel
+- **Test Panel**: Press `Ctrl+W` in-game to open the comprehensive weather test panel
 - **Console Commands**: 
-  - `setTestTemperature(35)` - Test hot weather
-  - `setTestTemperature(-5)` - Test cold weather  
+  - `setTestTemperature(35)` - Test temperature effects
+  - `setTestWeather('storm', 20)` - Test weather conditions
+  - `setTestWeatherData({temperature: 30, condition: 'snow'})` - Test complete weather data
   - `disableWeatherTest()` - Return to real weather
 

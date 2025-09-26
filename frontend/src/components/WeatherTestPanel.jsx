@@ -28,9 +28,27 @@ const WeatherTestPanel = () => {
     { temp: 38, label: 'Very Hot (38°C)' },
   ];
 
+  const testWeatherConditions = [
+    { condition: 'clear', temp: 25, label: 'Clear Sky', color: '#87CEEB' },
+    { condition: 'cloudy', temp: 22, label: 'Cloudy', color: '#B0C4DE' },
+    { condition: 'overcast', temp: 18, label: 'Overcast', color: '#778899' },
+    { condition: 'rain', temp: 15, label: 'Rainy', color: '#4682B4' },
+    { condition: 'storm', temp: 20, label: 'Stormy', color: '#483D8B' },
+    { condition: 'snow', temp: -2, label: 'Snowy', color: '#F0F8FF' },
+    { condition: 'fog', temp: 12, label: 'Foggy', color: '#DCDCDC' },
+  ];
+
   const applyTestTemperature = (temp) => {
     if (window.setTestTemperature) {
       window.setTestTemperature(temp);
+      setCurrentTemp(temp);
+      setTestMode(true);
+    }
+  };
+
+  const applyTestWeather = (condition, temp) => {
+    if (window.setTestWeather) {
+      window.setTestWeather(condition, temp);
       setCurrentTemp(temp);
       setTestMode(true);
     }
@@ -62,15 +80,39 @@ const WeatherTestPanel = () => {
       )}
 
       <div className="weather-test-controls">
+        <div style={{ marginBottom: '8px', fontSize: '11px', color: '#ccc' }}>
+          <strong>Temperature Tests:</strong>
+        </div>
         {testTemperatures.map(({ temp, label }) => (
           <button
             key={temp}
             onClick={() => applyTestTemperature(temp)}
             style={{
-              backgroundColor: currentTemp === temp ? '#007acc' : '#333'
+              backgroundColor: currentTemp === temp ? '#007acc' : '#333',
+              fontSize: '9px',
+              marginBottom: '2px'
             }}
           >
             {label}
+          </button>
+        ))}
+        
+        <div style={{ marginTop: '8px', marginBottom: '5px', fontSize: '11px', color: '#ccc' }}>
+          <strong>Weather Conditions:</strong>
+        </div>
+        {testWeatherConditions.map(({ condition, temp, label, color }) => (
+          <button
+            key={condition}
+            onClick={() => applyTestWeather(condition, temp)}
+            style={{
+              backgroundColor: color,
+              color: condition === 'snow' || condition === 'fog' ? '#333' : '#fff',
+              fontSize: '9px',
+              marginBottom: '2px',
+              border: 'none'
+            }}
+          >
+            {label} ({temp}°C)
           </button>
         ))}
         
@@ -78,16 +120,18 @@ const WeatherTestPanel = () => {
           onClick={restoreRealWeather}
           style={{
             backgroundColor: !testMode ? '#4caf50' : '#666',
-            marginTop: '5px'
+            marginTop: '8px'
           }}
         >
           Real Weather
         </button>
       </div>
 
-      <div style={{ fontSize: '10px', color: '#aaa', marginTop: '8px' }}>
-        Console commands:<br/>
+      <div style={{ fontSize: '9px', color: '#aaa', marginTop: '8px' }}>
+        <strong>Console commands:</strong><br/>
         setTestTemperature(25)<br/>
+        setTestWeather('rain', 15)<br/>
+        setTestWeatherData({`{temperature: 30, condition: 'storm'}`})<br/>
         disableWeatherTest()
       </div>
     </div>

@@ -1,6 +1,7 @@
 // frontend/src/components/WeatherOverlay.jsx
 import React, { useEffect, useState } from 'react';
 import WeatherService from '../services/WeatherService';
+import WeatherAnimations from './WeatherAnimations';
 
 const WeatherOverlay = ({ children }) => {
   const [weatherEffects, setWeatherEffects] = useState(null);
@@ -9,14 +10,14 @@ const WeatherOverlay = ({ children }) => {
   useEffect(() => {
     const fetchWeatherEffects = async () => {
       try {
-        const temperature = await WeatherService.getCurrentTemperature();
-        const effects = WeatherService.getWeatherEffects(temperature);
+        const weatherData = await WeatherService.getCurrentWeatherData();
+        const effects = WeatherService.getWeatherEffects(weatherData);
         setWeatherEffects(effects);
-        console.log('[WeatherOverlay] Applied effects for', effects.description, 'weather');
+        console.log('[WeatherOverlay] Applied effects for', effects.description);
       } catch (error) {
         console.error('[WeatherOverlay] Error fetching weather effects:', error);
         // Apply default neutral effects
-        setWeatherEffects(WeatherService.getWeatherEffects(22));
+        setWeatherEffects(WeatherService.getWeatherEffects({ temperature: 22, condition: 'clear' }));
       } finally {
         setIsLoading(false);
       }
@@ -33,23 +34,39 @@ const WeatherOverlay = ({ children }) => {
   useEffect(() => {
     window.setTestTemperature = (temp) => {
       WeatherService.setTestTemperature(temp);
-      const effects = WeatherService.getWeatherEffects(temp);
+      const effects = WeatherService.getWeatherEffects({ temperature: temp, condition: 'clear' });
       setWeatherEffects(effects);
       console.log(`Temperature set to ${temp}°C (${effects.description})`);
+    };
+
+    window.setTestWeather = (condition, temp = 22) => {
+      WeatherService.setTestWeather(condition, temp);
+      const effects = WeatherService.getWeatherEffects({ temperature: temp, condition });
+      setWeatherEffects(effects);
+      console.log(`Weather set to ${condition} at ${temp}°C (${effects.description})`);
+    };
+
+    window.setTestWeatherData = (weatherData) => {
+      WeatherService.setTestWeatherData(weatherData);
+      const effects = WeatherService.getWeatherEffects(weatherData);
+      setWeatherEffects(effects);
+      console.log(`Weather data set:`, weatherData, `(${effects.description})`);
     };
 
     window.disableWeatherTest = () => {
       WeatherService.disableTestMode();
       // Refresh with real weather
-      WeatherService.getCurrentTemperature().then(temp => {
-        const effects = WeatherService.getWeatherEffects(temp);
+      WeatherService.getCurrentWeatherData().then(weatherData => {
+        const effects = WeatherService.getWeatherEffects(weatherData);
         setWeatherEffects(effects);
-        console.log(`Real weather restored: ${temp}°C (${effects.description})`);
+        console.log(`Real weather restored:`, weatherData, `(${effects.description})`);
       });
     };
 
     return () => {
       delete window.setTestTemperature;
+      delete window.setTestWeather;
+      delete window.setTestWeatherData;
       delete window.disableWeatherTest;
     };
   }, []);
@@ -91,6 +108,10 @@ const WeatherOverlay = ({ children }) => {
   return (
     <div style={containerStyle} className="weather-container">
       <div style={overlayStyle} className="weather-overlay" />
+      <WeatherAnimations 
+        animations={weatherEffects.animations || []} 
+        intensity={weatherEffects.intensity || 0.5} 
+      />
       <div style={contentStyle} className="weather-content">
         {children}
       </div>
