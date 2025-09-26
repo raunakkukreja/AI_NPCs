@@ -2,6 +2,7 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { addSteps, interactNPC } from "../api";
 
 /*
   WorldView: pointer-lock + WASD + mouse-look, NPCs, "Press X to interact" hint.
@@ -56,6 +57,11 @@ function PlayerController({ onPositionChange }) {
           detail: { position: [pos.x, pos.y, pos.z] }
         });
         window.dispatchEvent(evt);
+      }
+      if (
+        e.code === "KeyW" || e.code === "KeyA" || e.code === "KeyS" || e.code === "KeyD"
+      ) {
+        addSteps(1);
       }
     }
     function onKeyUp(e) {
@@ -210,6 +216,7 @@ export default function WorldView({ onTalkRequest, pausedNPCId }) {
       if (nearest && bestDist <= 2.2) {
         // call up to App
         onTalkRequest && onTalkRequest(nearest.id);
+        interactNPC(nearest.id); // Track NPC interaction
       } else {
         window.dispatchEvent(new CustomEvent("game-interact-failed", { detail: { distance: bestDist } }));
       }

@@ -63,4 +63,30 @@ export async function interactStream(npcId, text, onChunk) {
     throw err;
   }
 }
+export async function getHabits() {
+  return fetch('/api/habits').then(res => res.json());
+}
 
+export async function addSteps(steps) {
+  return fetch('/api/habits/steps', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ steps })
+  }).then(res => res.json());
+}
+
+export async function interactNPC(npc) {
+  return fetch('/api/habits/npc', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ npc })
+  }).then(res => res.json());
+}
+
+export async function interactArea(area) {
+  return fetch('/api/habits/area', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ area })
+  }).then(res => res.json());
+}

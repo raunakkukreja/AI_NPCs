@@ -1,6 +1,8 @@
 // frontend/src/components/World2DMap.jsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import "./../styles.css";
+import { addSteps, interactNPC, interactArea } from "../api";
+
 
 /* constants & helpers */
 const MAP_W = 2816; // actual map width
@@ -477,6 +479,13 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
   useEffect(() => {
     function onKeyDown(e) {
       keys.current[e.code] = true;
+      // Track movement steps
+      if (
+        e.code === "KeyW" || e.code === "KeyA" || e.code === "KeyS" || e.code === "KeyD" ||
+        e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight"
+      ) {
+        addSteps(1);
+      }
     }
     function onKeyUp(e) { keys.current[e.code] = false; }
     window.addEventListener("keydown", onKeyDown);
@@ -557,6 +566,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
         });
         if (nearestEnt && best <= 80) {
           onTalkRequest && onTalkRequest(nearestEnt.id);
+          interactNPC(nearestEnt.id); // Track NPC interaction
           return;
         }
 
@@ -578,6 +588,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
         if (nearestBuilding) {
           console.log('Building interaction:', nearestBuilding);
           onTalkRequest && onTalkRequest({ type: 'building', id: nearestBuilding.id, label: nearestBuilding.label, description: nearestBuilding.description });
+          interactArea(nearestBuilding.id); // Track area/building interaction
         }
       }
     }

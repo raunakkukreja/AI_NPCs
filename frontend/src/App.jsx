@@ -1,10 +1,10 @@
-// frontend/src/App.jsx
 import React, { useState, useEffect } from "react";
 import World2DMap from "./components/World2DMap";
 import ChatBox from "./components/ChatBox";
 import NPCCard from "./components/NPCCard";
 import { interact } from "./api";
 import ReportScreen from "./components/ReportScreen";
+import HabitPanel from './components/HabitPanel';
 
 export default function App() {
   const [showTutorial, setShowTutorial] = useState(true);
@@ -107,7 +107,13 @@ export default function App() {
 
       {/* Map area */}
       <div className="canvas-wrap">
-        <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} playerInteractions={playerInteractions} chatVisible={chatVisible} onShowReport={handleShowReport} />
+        <World2DMap
+          onTalkRequest={handleTalkRequest}
+          pausedNPCId={pausedNPCId}
+          playerInteractions={playerInteractions}
+          chatVisible={chatVisible}
+          onShowReport={handleShowReport}
+        />
       </div>
 
       {/* Info panel */}
@@ -115,6 +121,7 @@ export default function App() {
         <h2>Living Worlds — Prototype</h2>
         <p>{lastDialogue}</p>
         <NPCCard subject={panelSubject} />
+        <HabitPanel /> {/* <-- Add this line to show habits */}
       </div>
 
       {chatVisible && currentNPC && (

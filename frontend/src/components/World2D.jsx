@@ -1,6 +1,7 @@
 // frontend/src/components/World2D.jsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import "./../styles.css";
+import { addSteps, interactNPC, interactArea } from "../api";
 
 /* constants & helpers */
 const WORLD_W = 2000;
@@ -287,8 +288,17 @@ export default function World2D({ onTalkRequest, pausedNPCId }) {
       if (e.code === "KeyX") console.log("[Input] KeyX pressed (window listener)");
       // store pressed for movement handling
       keys.current[e.code] = true;
+
+      // Track movement steps
+      if (
+        e.code === "KeyW" || e.code === "KeyA" || e.code === "KeyS" || e.code === "KeyD" ||
+        e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight"
+      ) {
+        addSteps(1);
+      }
     }
     function onKeyDown(e) {
+      logKey(e);
       // we call a centralized logging helper
       console.log("[Input] keydown:", e.code, "activeElement:", document.activeElement?.tagName);
       keys.current[e.code] = true;
@@ -359,6 +369,7 @@ export default function World2D({ onTalkRequest, pausedNPCId }) {
         if (nearestEnt && best <= 90) {
           console.log("[APP] interact -> NPC", nearestEnt.id, "dist", best);
           onTalkRequest && onTalkRequest(nearestEnt.id);
+          interactNPC(nearestEnt.id); // Track NPC interaction
           return;
         }
         const nearestArea = AREAS.find(ar => {
@@ -368,6 +379,7 @@ export default function World2D({ onTalkRequest, pausedNPCId }) {
         if (nearestArea) {
           console.log("[APP] interact -> AREA", nearestArea.id);
           onTalkRequest && onTalkRequest({ type:'area', id: nearestArea.id });
+          interactArea(nearestArea.id); // Track area interaction
           return;
         }
         setHintVisible(true);
