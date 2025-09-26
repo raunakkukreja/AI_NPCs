@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import World2DMap from "./components/World2DMap";
 import ChatBox from "./components/ChatBox";
 import NPCCard from "./components/NPCCard";
+import WeatherOverlay from "./components/WeatherOverlay";
+import WeatherTestPanel from "./components/WeatherTestPanel";
 import { interact } from "./api";
 import ReportScreen from "./components/ReportScreen";
 
@@ -105,9 +107,11 @@ export default function App() {
         </div>
       )}
 
-      {/* Map area */}
+      {/* Map area with weather overlay */}
       <div className="canvas-wrap">
-        <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} playerInteractions={playerInteractions} chatVisible={chatVisible} onShowReport={handleShowReport} />
+        <WeatherOverlay>
+          <World2DMap onTalkRequest={handleTalkRequest} pausedNPCId={pausedNPCId} playerInteractions={playerInteractions} chatVisible={chatVisible} onShowReport={handleShowReport} />
+        </WeatherOverlay>
       </div>
 
       {/* Info panel */}
@@ -127,6 +131,9 @@ export default function App() {
           onSend={handleSendToNPC}
         />
       )}
+
+      {/* Weather test panel for development */}
+      <WeatherTestPanel />
     </div>
   );
 }
