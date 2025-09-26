@@ -40,4 +40,3 @@ The game now includes real-time weather effects that change the visual appearanc
   - `setTestTemperature(-5)` - Test cold weather  
   - `disableWeatherTest()` - Return to real weather
 
-See `WEATHER_TEST_GUIDE.md` for detailed testing instructions.
