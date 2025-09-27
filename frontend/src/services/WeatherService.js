@@ -140,14 +140,17 @@ class WeatherService {
       baseFilter = 'brightness(1.15) saturate(1.1) sepia(0.1)';
       baseOverlay = 'rgba(255, 245, 157, 0.08)';
     } else if (temperature >= 15) {
-      baseFilter = 'brightness(0.95) saturate(0.95) hue-rotate(-5deg)';
-      baseOverlay = 'rgba(173, 216, 230, 0.05)';
+      // Cool: a bit more bluish and slightly duller
+      baseFilter = 'brightness(0.92) saturate(0.9) hue-rotate(-12deg) contrast(0.97)';
+      baseOverlay = 'rgba(173, 216, 230, 0.10)';
     } else if (temperature >= 5) {
-      baseFilter = 'brightness(0.85) saturate(0.8) hue-rotate(-10deg) contrast(0.95)';
-      baseOverlay = 'rgba(135, 206, 250, 0.1)';
+      // Cold: noticeably blue and reduced saturation/brightness
+      baseFilter = 'brightness(0.82) saturate(0.75) hue-rotate(-18deg) contrast(0.93)';
+      baseOverlay = 'rgba(135, 206, 250, 0.18)';
     } else {
-      baseFilter = 'brightness(0.75) saturate(0.6) hue-rotate(-15deg) contrast(0.9)';
-      baseOverlay = 'rgba(70, 130, 180, 0.15)';
+      // Very cold: strong blue cast and dull ambience
+      baseFilter = 'brightness(0.72) saturate(0.6) hue-rotate(-22deg) contrast(0.88)';
+      baseOverlay = 'rgba(70, 130, 180, 0.25)';
     }
 
     // Apply condition-specific effects
@@ -161,8 +164,9 @@ class WeatherService {
         break;
 
       case 'snow':
-        effects.filter = baseFilter + ' brightness(1.2) saturate(0.3) contrast(1.3)';
-        effects.overlay = this.blendColors(baseOverlay, 'rgba(240, 248, 255, 0.3)');
+        // Cooler tone for snowy scenes
+        effects.filter = baseFilter + ' brightness(1.2) saturate(0.3) contrast(1.3) hue-rotate(-8deg)';
+        effects.overlay = this.blendColors(baseOverlay, 'rgba(240, 248, 255, 0.34)');
         effects.animations = ['snow'];
         effects.intensity = 0.9;
         effects.description = 'snowy weather';
