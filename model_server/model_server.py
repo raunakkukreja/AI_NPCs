@@ -11,7 +11,7 @@ from llama_cpp import Llama
 import json
 
 # --- Configuration ---
-MODEL_PATH = os.environ.get("MODEL_PATH",r"C:\Users\RAUNAK\.cache\huggingface\hub\models--QuantFactory--Meta-Llama-3-8B-Instruct-GGUF\snapshots\86e0c07efa3f1b6f06ea13e31b1e930dce865ae4\Meta-Llama-3-8B-Instruct.Q4_K_M.gguf")  #"C:\Users\RAUNAK\.cache\huggingface\hub\models--QuantFactory--Meta-Llama-3-8B-Instruct-GGUF\snapshots\86e0c07efa3f1b6f06ea13e31b1e930dce865ae4\Meta-Llama-3-8B-Instruct.Q4_K_M.gguf"
+MODEL_PATH = os.environ.get("MODEL_PATH",r"C:\Users\kvidi\.cache\huggingface\hub\models--QuantFactory--Meta-Llama-3-8B-Instruct-GGUF\snapshots\86e0c07efa3f1b6f06ea13e31b1e930dce865ae4\Meta-Llama-3-8B-Instruct.Q4_K_M.gguf")  #"C:\Users\RAUNAK\.cache\huggingface\hub\models--QuantFactory--Meta-Llama-3-8B-Instruct-GGUF\snapshots\86e0c07efa3f1b6f06ea13e31b1e930dce865ae4\Meta-Llama-3-8B-Instruct.Q4_K_M.gguf"
 API_KEY = os.environ.get(r"RVVL")  # optional; set to protect the local endpoint
 PORT = int(os.environ.get("MODEL_PORT", "8000"))
 

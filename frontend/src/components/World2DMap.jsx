@@ -110,34 +110,20 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
       .catch(err => console.error('Failed to load map coordinates:', err));
   }, []);
 
-  // Reset data on page load and load gossip from backend
+  // Load gossip from backend only once
   useEffect(() => {
-    const resetAndLoad = async () => {
+    const loadGossip = async () => {
       try {
-        await fetch('/api/reset', { method: 'POST' });
-        console.log('NPC data reset on page load');
         const response = await fetch('/api/gossip');
         if (response.ok) {
           const gossipData = await response.json();
           setGossipNetwork(gossipData);
         }
       } catch (err) {
-        console.error('Failed to reset/load:', err);
+        // Backend not available
       }
     };
-    resetAndLoad();
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch('/api/gossip');
-        if (response.ok) {
-          const gossipData = await response.json();
-          setGossipNetwork(gossipData);
-        }
-      } catch (err) {
-        console.error('Failed to load gossip network:', err);
-      }
-    }, 2000);
-    return () => clearInterval(interval);
+    loadGossip();
   }, []);
 
   // Audio initialization
@@ -448,17 +434,22 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
           const npcs = current.filter(ent => ent.type === 'npc');
           const newSharingPairs = [];
 
+          const processedPairs = new Set();
           npcs.forEach((npc1, i) => {
             npcs.forEach((npc2, j) => {
               if (i !== j && dist(npc1.pos, npc2.pos) < 100) {
+                const pairKey = [npc1.id, npc2.id].sort().join('-');
                 newSharingPairs.push([npc1.id, npc2.id]);
 
-                // Trigger gossip sharing on backend
-                fetch('/api/gossip/share', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ npc1: npc1.id, npc2: npc2.id })
-                }).catch(err => console.error('Gossip share failed:', err));
+                // Only trigger gossip sharing once per pair
+                if (!processedPairs.has(pairKey)) {
+                  processedPairs.add(pairKey);
+                  fetch('/api/gossip/share', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ npc1: npc1.id, npc2: npc2.id })
+                  }).catch(() => {});
+                }
               }
             });
           });

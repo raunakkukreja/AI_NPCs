@@ -16,6 +16,22 @@
     "Can procure a fake ledger for the right price"
   ],
   "greeting_seed": "Welcome! For the right coin or service, I can get you things not on the shelf.",
-  "memory": [],
-  "gossip": []
+  "memory": [
+    {
+      "role": "user",
+      "content": "feefe"
+    },
+    {
+      "role": "assistant",
+      "content": "Welcome to my humble tavern! *wink* I'm Merek Moachivitis, the proprietor of this fine establishment. What brings you to our little corner of the world? Don't worry, I won't pry... much. *laughs* What can I get for you? A warm meal, a cold drink, or perhaps some juicy gossip?"
+    }
+  ],
+  "gossip": [
+    {
+      "id": "gossip_1758977865336",
+      "summary": "Player talked to Merek Moachivitis about: feefe",
+      "timestamp": 1758977865336,
+      "source": "player_interaction"
+    }
+  ]
 }

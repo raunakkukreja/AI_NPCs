@@ -17,5 +17,13 @@
   ],
   "greeting_seed": "Bah, haven't seen you around. You look new. I might speak if you can withstand my temper.",
   "memory": [],
-  "gossip": []
+  "gossip": [
+    {
+      "id": "gossip_1758975559632",
+      "summary": "Player talked to Helios Voulgourais about: hello",
+      "timestamp": 1758975559632,
+      "source": "guard",
+      "sharedAt": 1758978044272
+    }
+  ]
 }

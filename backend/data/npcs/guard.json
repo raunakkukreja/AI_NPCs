@@ -17,5 +17,13 @@
   ],
   "greeting_seed": "Halt. State your business. Papers, please — or keep walking.",
   "memory": [],
-  "gossip": []
+  "gossip": [
+    {
+      "id": "gossip_1758975559632",
+      "summary": "Player talked to Helios Voulgourais about: hello",
+      "timestamp": 1758975559632,
+      "source": "guard2",
+      "sharedAt": 1758977807327
+    }
+  ]
 }

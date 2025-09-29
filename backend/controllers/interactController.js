@@ -3,15 +3,26 @@ const fs = require('fs');
 const path = require('path');
 const { callLocalModel, callLocalModelStream } = require('../services/LLMGateway');
 const RelationshipMatrix = require('../services/RelationshipMatrix');
+const smartBulb = require('../services/SmartBulbController');
+
+const PromptInjectionFilter = require('../services/PromptInjectionFilter');
 const NPC_DIR = path.join(__dirname, '..', 'data', 'npcs');
 const GAMESTATE = path.join(__dirname, '..', 'data', 'gamestate.json');
 const MEMORY_FILE = path.join(__dirname, '..', 'data', 'memory.json');
 const GOSSIP_FILE = path.join(__dirname, '..', 'data', 'gossip.log.json');
 
+const profileCache = new Map();
+
 function loadNpcProfile(id) {
+  if (profileCache.has(id)) {
+    return profileCache.get(id);
+  }
+  
   try {
     const text = fs.readFileSync(path.join(NPC_DIR, `${id}.json`), 'utf8');
-    return JSON.parse(text);
+    const profile = JSON.parse(text);
+    profileCache.set(id, profile);
+    return profile;
   } catch (e) {
     return null;
   }
@@ -20,6 +31,7 @@ function loadNpcProfile(id) {
 function saveNpcProfile(id, profile) {
   try {
     fs.writeFileSync(path.join(NPC_DIR, `${id}.json`), JSON.stringify(profile, null, 2), 'utf8');
+    profileCache.set(id, profile); // Update cache
   } catch (e) {
     console.warn(`Failed to save NPC profile ${id}:`, e.message);
   }
@@ -94,8 +106,11 @@ function saveMemorySnippet(npcId, snippet) {
 // POST /api/npc/:id/interact
 async function handleInteract(req, res) {
   const npcId = req.params.id;
-  const playerText = req.body.text;
+  const rawPlayerText = req.body.text;
   const playerAction = req.body.action; // New field for specific actions
+  
+  // Sanitize user input to prevent prompt injection
+  const playerText = PromptInjectionFilter.sanitizeInput(rawPlayerText);
 
   // Handle relationship changes based on actions
   if (playerAction) {
@@ -131,7 +146,7 @@ async function handleInteract(req, res) {
   const playerGossip = npcGossip.filter(g => g.summary && g.summary.includes('Player'));
   const shouldStartWithGossip = playerGossip.length > 0 && (!npc.memory || npc.memory.length === 0);
 
-  const systemContent = `You are ${npc.name}. Persona: ${npc.personality || ''}. Traits: ${ (npc.traits||[]).join(', ') }. You are role-playing as this NPC. Keep replies short and in-character.`;
+  const systemContent = PromptInjectionFilter.createSecureSystemPrompt(npc);
   let context = `Location: ${gameState.location || 'unknown'}. Time: ${gameState.time || ''}. Player reputation: ${gameState.player?.reputation || 'unknown'}.`;
   if (gossip.length) {
     context += ` Recent gossip relevant to you: ${gossip.map(g => g.text).join(' | ')}`;
@@ -160,6 +175,10 @@ async function handleInteract(req, res) {
   try {
     const result = await callLocalModel(messages, { max_tokens: 200, temperature: 0.35 });
     const npcReply = (result && result.text) ? result.text.trim() : " ... ";
+
+    // Trigger bulb based on NPC interaction
+    console.log(`[INTERACT-BULB] Player interacted with ${npcId}`);
+    smartBulb.setInteractionTheme(npcId, 'neutral');
 
     // Update NPC memory with last 4 exchanges (run in background)
     updateNpcMemory(npcId, playerText, npcReply).catch(err => 
@@ -194,13 +213,22 @@ function handleGetProfile(req, res) {
     return res.status(404).json({ error: 'NPC not found' });
   }
   
+  // Set cache headers for faster loading
+  res.set({
+    'Cache-Control': 'public, max-age=300', // 5 minutes
+    'ETag': `"${npcId}-${Date.now()}"`
+  });
+  
   res.json(npc);
 }
 
 // POST /api/npc/:id/interact/stream
 async function handleInteractStream(req, res) {
   const npcId = req.params.id;
-  const playerText = (req.body && req.body.text) ? req.body.text : '';
+  const rawPlayerText = (req.body && req.body.text) ? req.body.text : '';
+  
+  // Sanitize user input to prevent prompt injection
+  const playerText = PromptInjectionFilter.sanitizeInput(rawPlayerText);
 
   console.log(`[INTERACT STREAM] npc=${npcId}, playerText=${playerText}`);
 
@@ -213,7 +241,7 @@ async function handleInteractStream(req, res) {
   const playerGossip = npcGossip.filter(g => g.summary && g.summary.includes('Player'));
   const shouldStartWithGossip = playerGossip.length > 0 && (!npc.memory || npc.memory.length === 0);
 
-  const systemContent = `You are ${npc.name}. Persona: ${npc.personality || ''}. Traits: ${ (npc.traits||[]).join(', ') }. You are role-playing as this NPC. Keep replies short and in-character.`;
+  const systemContent = PromptInjectionFilter.createSecureSystemPrompt(npc);
   let context = `Location: ${gameState.location || 'unknown'}. Time: ${gameState.time || ''}. Player reputation: ${gameState.player?.reputation || 'unknown'}.`;
   if (gossip.length) {
     context += ` Recent gossip relevant to you: ${gossip.map(g => g.text).join(' | ')}`;
@@ -258,6 +286,10 @@ async function handleInteractStream(req, res) {
     res.write('data: [DONE]\n\n');
     res.end();
 
+    // Trigger bulb based on NPC interaction
+    console.log(`[STREAM-BULB] Player streamed with ${npcId}`);
+    smartBulb.setInteractionTheme(npcId, 'neutral');
+    
     // Update NPC memory after streaming is complete
     console.log(`[STREAM] Full response for ${npcId}:`, fullResponse.trim());
     await updateNpcMemory(npcId, playerText, fullResponse.trim());

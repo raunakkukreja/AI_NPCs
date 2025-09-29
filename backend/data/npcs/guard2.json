@@ -17,6 +17,29 @@
     "Knows palace routines",
     "Aware of recent disturbances"
   ],
-  "memory": [],
-  "gossip": []
+  "memory": [
+    {
+      "role": "user",
+      "content": "whats good ?"
+    },
+    {
+      "role": "assistant",
+      "content": "*eyes narrowing slightly* \"Ah, you're the one who spoke with Helios, I hear. What's your business with him? He's not one to share secrets lightly, you know.\" *hand resting on the hilt of my sword, ready to draw at a moment's notice*"
+    }
+  ],
+  "gossip": [
+    {
+      "id": "gossip_1758975559632",
+      "summary": "Player talked to Helios Voulgourais about: hello",
+      "timestamp": 1758975559632,
+      "source": "thief",
+      "sharedAt": 1758977737889
+    },
+    {
+      "id": "gossip_1758978495120",
+      "summary": "Player talked to Rupert Lillis about: whats good ?",
+      "timestamp": 1758978495120,
+      "source": "player_interaction"
+    }
+  ]
 }

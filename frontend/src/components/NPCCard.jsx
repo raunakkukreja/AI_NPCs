@@ -10,8 +10,17 @@ export default function NPCCard({ subject }) {
     if (!subject) { setProfile(null); return; }
     if (subject.type === "npc" && subject.id) {
       setLoading(true);
-      fetch(`/api/npc/${subject.id}/profile`)
+      
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      
+      fetch(`/api/npc/${subject.id}/profile`, {
+        signal: controller.signal,
+        headers: { 'Cache-Control': 'max-age=300' }
+      })
         .then((r) => {
+          clearTimeout(timeoutId);
           if (!r.ok) throw new Error("Not found");
           return r.json();
         })

@@ -17,5 +17,13 @@
   ],
   "greeting_seed": "Good day. Is there something you need?",
   "memory": [],
-  "gossip": []
+  "gossip": [
+    {
+      "id": "gossip_1758977865336",
+      "summary": "Player talked to Merek Moachivitis about: feefe",
+      "timestamp": 1758977865336,
+      "source": "bartender",
+      "sharedAt": 1758978194967
+    }
+  ]
 }

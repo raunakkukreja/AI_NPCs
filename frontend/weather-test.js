@@ -5,9 +5,9 @@ console.log('🌤️ Weather Feature Test Suite');
 
 // Test 1: Verify WeatherService exists
 if (window.setTestTemperature && window.disableWeatherTest) {
-  console.log('✅ Weather test functions are available');
+  console.log(' Weather test functions are available');
 } else {
-  console.log('❌ Weather test functions are not available');
+  console.log('Weather test functions are not available');
 }
 
 // Test 2: Test different temperature ranges
@@ -48,10 +48,10 @@ setTimeout(() => {
   const weatherOverlay = document.querySelector('.weather-overlay');
   
   if (weatherContainer && weatherOverlay) {
-    console.log('✅ Weather DOM elements found');
-    console.log('🎨 Current filter:', weatherContainer.style.filter);
-    console.log('🌈 Current overlay:', weatherOverlay.style.backgroundColor);
+    console.log(' Weather DOM elements found');
+    console.log(' Current filter:', weatherContainer.style.filter);
+    console.log(' Current overlay:', weatherOverlay.style.backgroundColor);
   } else {
-    console.log('❌ Weather DOM elements not found');
+    console.log(' Weather DOM elements not found');
   }
 }, 1000);
