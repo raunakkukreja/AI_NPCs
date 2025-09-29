@@ -21,6 +21,11 @@ const WeatherAnimations = ({ animations = [], intensity = 0.5 }) => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
+    // Determine storm mode (storm uses 'lightning' + 'rain')
+    const isStorm = animations.includes('lightning');
+    const rainSpeedMult = isStorm ? 1.8 : 1.0; // Faster rain in storm
+    const rainLengthMult = isStorm ? 1.3 : 1.0; // Slightly longer streaks in storm
+
     // Initialize particles based on animations
     const initializeParticles = () => {
       particles.length = 0;
@@ -55,8 +60,8 @@ const WeatherAnimations = ({ animations = [], intensity = 0.5 }) => {
       type: 'rain',
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height - canvas.height,
-      speed: 3 + Math.random() * 5,
-      length: 10 + Math.random() * 20,
+      speed: (3 + Math.random() * 5) * rainSpeedMult,
+      length: (10 + Math.random() * 20) * rainLengthMult,
       opacity: 0.3 + Math.random() * 0.4,
       width: 1 + Math.random() * 2
     });
@@ -142,7 +147,9 @@ const WeatherAnimations = ({ animations = [], intensity = 0.5 }) => {
 
         switch (particle.type) {
           case 'rain':
-            ctx.strokeStyle = '#4a9eff';
+            // White raindrops
+            ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+            ctx.lineCap = 'round';
             ctx.lineWidth = particle.width;
             ctx.beginPath();
             ctx.moveTo(particle.x, particle.y);
