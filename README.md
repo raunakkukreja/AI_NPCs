@@ -2,29 +2,29 @@
 
 An immersive interactive game featuring AI-powered NPCs with dynamic weather effects, real-time conversations, and smart bulb integration for enhanced gameplay experience.
 
-## 🎮 Features
+##  Features
 
-### 🤖 AI-Powered NPCs
+###  AI-Powered NPCs
 - **Dynamic Conversations**: NPCs powered by local LLaMA 3 8B model with persistent memory
 - **Personality System**: Each NPC has unique personality traits, relationships, and behavioral patterns
 - **Memory & Relationships**: NPCs remember past interactions and maintain relationship matrices
 - **Gossip System**: NPCs share information and rumors that spread throughout the game world
 - **Contextual Responses**: Location-aware conversations that adapt to the environment
 
-### 🌦️ Dynamic Weather System
+###  Dynamic Weather System
 - **Real-time Weather**: Integration with WeatherAPI.com for live weather data
 - **Visual Effects**: Animated weather particles (rain, snow, fog) with atmospheric lighting
 - **Temperature Effects**: Hot/cold weather influences NPC behavior and visual atmosphere
 - **Weather Conditions**: 
-  - ☀️ Clear: Bright, warm lighting
-  - ☁️ Cloudy: Gentle cloud animations, reduced brightness
-  - 🌫️ Overcast: Dark gray overlay, gloomy atmosphere
-  - 🌧️ Rain: Animated raindrops with blue tint
-  - ⛈️ Storm: Heavy rain with lightning flashes
-  - ❄️ Snow: Floating snowflakes with desaturated visuals
-  - 🌫️ Fog: Drifting fog particles with reduced visibility
+  -  Clear: Bright, warm lighting
+  -  Cloudy: Gentle cloud animations, reduced brightness
+  -  Overcast: Dark gray overlay, gloomy atmosphere
+  -  Rain: Animated raindrops with blue tint
+  -  Storm: Heavy rain with lightning flashes
+  -  Snow: Floating snowflakes with desaturated visuals
+  -  Fog: Drifting fog particles with reduced visibility
 
-### 💡 Smart Bulb Integration
+###  Smart Bulb Integration
 - **Philips Wiz Light Integration**: Physical smart bulb responds to game events
 - **Dynamic Lighting**: Colors change based on:
   - NPC interactions (each NPC has unique color)
@@ -32,13 +32,13 @@ An immersive interactive game featuring AI-powered NPCs with dynamic weather eff
   - Game events (gossip sharing, danger, movement)
   - Conversation tone (friendly, hostile, mysterious)
 
-### 🗺️ Interactive World
+###  Interactive World
 - **2D Village Map**: Navigate through different locations (Royal Court, Market, Garden, etc.)
 - **Location-based NPCs**: Characters positioned in contextually appropriate areas
 - **Interactive Elements**: Click-to-move navigation with sound effects
 - **Atmospheric Audio**: Background music and interaction sound effects
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Frontend
 - **React 18** with Vite
@@ -59,7 +59,7 @@ An immersive interactive game featuring AI-powered NPCs with dynamic weather eff
 - **pywizlight** for Philips Wiz bulb control
 - **asyncio** for non-blocking bulb operations
 
-## 📋 Prerequisites
+##  Prerequisites
 
 ### System Requirements
 - **Python**: 3.8 or higher
@@ -73,7 +73,7 @@ An immersive interactive game featuring AI-powered NPCs with dynamic weather eff
 - **Philips Wiz Smart Bulb** (optional, for lighting effects)
 - **Hugging Face** account (for model download)
 
-## 🚀 Installation & Setup
+##  Installation & Setup
 
 ### 1. Clone Repository
 ```bash
@@ -150,7 +150,7 @@ If you have a Philips Wiz bulb:
 def __init__(self, bulb_ip="192.168.1.XXX"):  # Your bulb's IP
 ```
 
-## 🎯 Running the Application
+##  Running the Application
 
 ### Start All Services
 
@@ -178,7 +178,7 @@ Frontend runs on `http://localhost:3001`
 ### Access the Game
 Open your browser and navigate to `http://localhost:3001`
 
-## 🎮 How to Play
+##  How to Play
 
 ### Basic Controls
 - **Click to Move**: Click anywhere on the map to move your character
@@ -202,7 +202,7 @@ Open your browser and navigate to `http://localhost:3001`
 - **Location Effects**: Notice how NPCs behave differently in various locations
 - **Smart Bulb**: Watch your smart bulb change colors based on game events
 
-## 🔧 Configuration
+##  Configuration
 
 ### Weather API Setup
 1. Sign up at [WeatherAPI.com](https://www.weatherapi.com/)
@@ -230,7 +230,7 @@ Edit NPC personalities in `backend/data/npcs/` directory. Each NPC has:
 - **Relationship preferences**
 - **Location associations**
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -259,7 +259,7 @@ Edit NPC personalities in `backend/data/npcs/` directory. Each NPC has:
 - **CPU-only mode**: Set `n_gpu_layers=0` if GPU causes issues
 - **Weather update frequency**: Adjust `updateInterval` in WeatherService
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 AI_NPCs/
@@ -280,14 +280,7 @@ AI_NPCs/
 └── README.md              # This file
 ```
 
-## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
