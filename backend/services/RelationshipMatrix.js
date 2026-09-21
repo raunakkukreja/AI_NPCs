@@ -1,89 +1,120 @@
-const fs = require('fs');
-const path = require('path');
+// backend/services/RelationshipMatrix.js
+const DataStore = require('./DataStore'); // expects backend/services/DataStore.js
 
 class RelationshipMatrix {
   constructor() {
-    this.matrixPath = path.join(__dirname, '../data/relationships.json');
-    this.factions = {
-      COURT_LOYALISTS: 'Court Loyalists',
-      MARKET_MERCHANTS: 'Market Merchants',
-      UNDERWORLD: 'Underworld',
-      NEUTRAL: 'Neutral'
-    };
-    
-    this.relationships = this.loadRelationships();
+    this.store = DataStore;
   }
 
-  loadRelationships() {
-    try {
-      return JSON.parse(fs.readFileSync(this.matrixPath, 'utf8'));
-    } catch (e) {
-      // Initialize default relationships if file doesn't exist
-      return this.initializeDefaultRelationships();
+  // MUST be called once at server startup
+  async initialize() {
+    // DataStore.load() will create file if missing
+    if (typeof this.store.load === 'function') {
+      await this.store.load();
+    } else {
+      // fallback: ensure in-memory structure exists
+      if (!this.store.relationships) {
+        this.store.relationships = { npc: {}, player: {}, npcFactions: {} };
+      }
+    }
+
+    // ensure keys exist
+    const r = this.store.relationships;
+    if (!r.npc) r.npc = {};
+    if (!r.player) r.player = {};
+    if (!r.npcFactions) r.npcFactions = {};
+
+    // persist any created defaults
+    if (typeof this.store.save === 'function') {
+      await this.store.save();
     }
   }
 
-  initializeDefaultRelationships() {
-    const defaultMatrix = {
-      factionRelations: {},  // Tracks overall faction relationships
-      npcRelations: {},      // Tracks individual NPC relationships
-      npcFactions: {         // Define NPC faction memberships
-        'guard': 'COURT_LOYALISTS',
-        'guard2': 'COURT_LOYALISTS',
-        'merchant': 'MARKET_MERCHANTS',
-        'thief': 'UNDERWORLD',
-        'bartender': 'MARKET_MERCHANTS',
-        'helios': 'UNDERWORLD',
-        'moody_old_man': 'NEUTRAL'
-      }
-    };
-
-    // Save the default matrix
-    fs.writeFileSync(this.matrixPath, JSON.stringify(defaultMatrix, null, 2));
-    return defaultMatrix;
-  }
-
-  getFactionRelation(faction1, faction2) {
-    const key = `${faction1}_${faction2}`;
-    return this.relationships.factionRelations[key] || 0;
-  }
-
-  getNPCRelation(npc1Id, npc2Id) {
-    const key = `${npc1Id}_${npc2Id}`;
-    return this.relationships.npcRelations[key] || 0;
-  }
-
-  updateRelation(npc1Id, npc2Id, delta) {
-    const key = `${npc1Id}_${npc2Id}`;
-    const reverseKey = `${npc2Id}_${npc1Id}`;
-    
-    this.relationships.npcRelations[key] = (this.relationships.npcRelations[key] || 0) + delta;
-    // Optional: Update reverse relation with reduced impact
-    this.relationships.npcRelations[reverseKey] = (this.relationships.npcRelations[reverseKey] || 0) + (delta * 0.5);
-    
-    this.save();
-    return this.relationships.npcRelations[key];
+  // Return snapshot copy
+  getRelationships() {
+    return JSON.parse(JSON.stringify(this.store.relationships || { npc: {}, player: {}, npcFactions: {} }));
   }
 
   getNPCFaction(npcId) {
-    return this.relationships.npcFactions[npcId] || 'NEUTRAL';
+    return (this.store.relationships?.npcFactions?.[npcId]) || 'NEUTRAL';
   }
 
-  save() {
-    fs.writeFileSync(this.matrixPath, JSON.stringify(this.relationships, null, 2));
+  getPlayerRelationship(npcId) {
+    return (this.store.relationships?.player?.[npcId]) ?? 0;
   }
 
-  // Get all relationships for an NPC
+  // returns an object of otherNpcId -> score
   getNPCRelationships(npcId) {
-    const relations = {};
-    Object.keys(this.relationships.npcRelations).forEach(key => {
-      if (key.startsWith(npcId + '_')) {
-        const targetNpc = key.split('_')[1];
-        relations[targetNpc] = this.relationships.npcRelations[key];
+    const out = {};
+    const pairs = this.store.relationships?.npc || {};
+    Object.keys(pairs).forEach(k => {
+      const parts = k.split('-');
+      if (parts.length !== 2) return;
+      const [a, b] = parts;
+      const score = pairs[k] || 0;
+      if (a === npcId) out[b] = score;
+      else if (b === npcId) out[a] = score;
+    });
+    return out;
+  }
+
+  // get directional value source->target
+  getNPCRelation(source, target) {
+    return (this.store.relationships?.npc?.[`${source}-${target}`]) ?? 0;
+  }
+
+  async updateRelationship(source, target, delta) {
+    if (!source || !target) throw new Error('source and target required');
+    if (!this.store.relationships) this.store.relationships = { npc: {}, player: {}, npcFactions: {} };
+
+    const key = `${source}-${target}`;
+    const reverseKey = `${target}-${source}`;
+
+    this.store.relationships.npc[key] = (this.store.relationships.npc[key] || 0) + delta;
+
+    const reverseDelta = Math.round(delta * 0.5);
+    this.store.relationships.npc[reverseKey] = (this.store.relationships.npc[reverseKey] || 0) + reverseDelta;
+
+    if (typeof this.store.save === 'function') {
+      await this.store.save();
+    }
+    return this.store.relationships.npc[key];
+  }
+
+  async updatePlayerRelationship(npcId, delta) {
+    if (!npcId) throw new Error('npcId required');
+    if (!this.store.relationships) this.store.relationships = { npc: {}, player: {}, npcFactions: {} };
+    this.store.relationships.player[npcId] = (this.store.relationships.player[npcId] || 0) + delta;
+    if (typeof this.store.save === 'function') {
+      await this.store.save();
+    }
+    return this.store.relationships.player[npcId];
+  }
+
+  async setRelationship(source, target, value) {
+    if (!this.store.relationships) this.store.relationships = { npc: {}, player: {}, npcFactions: {} };
+    this.store.relationships.npc[`${source}-${target}`] = value;
+    if (typeof this.store.save === 'function') {
+      await this.store.save();
+    }
+  }
+
+  async decayRelationships() {
+    const decay = -1;
+    Object.keys(this.store.relationships.player).forEach(async (npcId) => {
+      if (this.store.relationships.player[npcId] !== 0) {
+        await this.updatePlayerRelationship(npcId, decay);
       }
     });
-    return relations;
   }
 }
 
 module.exports = new RelationshipMatrix();
+
+// The relationship scores follow these general rules:
+
+// -50 to -30: Strong dislike/distrust
+// -29 to -10: Mild dislike
+// -9 to 9: Neutral
+// 10 to 29: Positive relationship
+// 30 to 50: Strong friendship/trust

@@ -112,6 +112,8 @@ async function handleInteract(req, res) {
   // Sanitize user input to prevent prompt injection
   const playerText = PromptInjectionFilter.sanitizeInput(rawPlayerText);
 
+  console.log('[DEBUG] Starting relationship check for:', npcId);
+  
   // Handle relationship changes based on actions
   if (playerAction) {
     switch (playerAction.type) {
@@ -190,6 +192,72 @@ async function handleInteract(req, res) {
     console.error("LLM call failed:", err);
     return res.status(500).json({ ok: false, error: err.message });
   }
+}
+
+// Merge the two handleInteract functions and ensure proper async/await
+async function handleInteract(req, res) {
+    const npcId = req.params.id;
+    const playerText = req.body.text;
+
+    try {
+        // First update relationships
+        await updatePlayerRelationships(npcId, playerText);
+        
+        // Then handle the rest of the interaction
+        const npc = loadNpcProfile(npcId) || { name: npcId, personality: "", traits: [] };
+        const gameState = loadGameState();
+        const gossip = loadRecentGossipForNpc(npcId, 5);
+
+        // Check if NPC has gossip about the player and should start conversation
+        const npcGossip = npc.gossip || [];
+        const playerGossip = npcGossip.filter(g => g.summary && g.summary.includes('Player'));
+        const shouldStartWithGossip = playerGossip.length > 0 && (!npc.memory || npc.memory.length === 0);
+
+        const systemContent = `You are ${npc.name}. Persona: ${npc.personality || ''}. Traits: ${ (npc.traits||[]).join(', ') }. You are role-playing as this NPC. Keep replies short and in-character.`;
+        let context = `Location: ${gameState.location || 'unknown'}. Time: ${gameState.time || ''}. Player reputation: ${gameState.player?.reputation || 'unknown'}.`;
+        if (gossip.length) {
+          context += ` Recent gossip relevant to you: ${gossip.map(g => g.text).join(' | ')}`;
+        }
+        if (playerGossip.length > 0) {
+          context += ` You've heard gossip about the player: ${playerGossip.map(g => g.summary).join(', ')}`;
+        }
+
+        const messages = [
+          { role: 'system', content: systemContent },
+          { role: 'system', content: `Context: ${context}` }
+        ];
+        
+        if (npc.memory && npc.memory.length > 0) {
+          messages.push(...npc.memory);
+        }
+        
+        // If NPC has gossip, they initiate conversation about it
+        if (shouldStartWithGossip) {
+          const gossipToMention = playerGossip[0].summary;
+          messages.push({ role: 'user', content: `Player approaches you. You should immediately start talking about the gossip you heard: "${gossipToMention}"` });
+        } else {
+          messages.push({ role: 'user', content: playerText });
+        }
+
+        try {
+          const result = await callLocalModel(messages, { max_tokens: 200, temperature: 0.35 });
+          const npcReply = (result && result.text) ? result.text.trim() : " ... ";
+
+          // Update NPC memory with last 4 exchanges (run in background)
+          updateNpcMemory(npcId, playerText, npcReply).catch(err => 
+            console.error('Memory update failed:', err)
+          );
+
+          return res.json({ ok: true, dialogue: npcReply });
+        } catch (err) {
+          console.error("LLM call failed:", err);
+          return res.status(500).json({ ok: false, error: err.message });
+        }
+        
+    } catch (err) {
+        console.error('Interaction failed:', err);
+        return res.status(500).json({ error: err.message });
+    }
 }
 
 // GET /api/npc/:id/check-gossip - Check if NPC should initiate gossip conversation
@@ -380,26 +448,28 @@ function handleGossipShare(req, res) {
         shared = true;
       }
     });
-    
+
+    // Save updated profiles
     if (shared) {
-      // Keep only last 10 gossip items per NPC
-      if (npcProfile1.gossip.length > 10) {
-        npcProfile1.gossip = npcProfile1.gossip.slice(-10);
-      }
-      if (npcProfile2.gossip.length > 10) {
-        npcProfile2.gossip = npcProfile2.gossip.slice(-10);
-      }
-      
       saveNpcProfile(npc1, npcProfile1);
       saveNpcProfile(npc2, npcProfile2);
-      console.log(`[GOSSIP] Shared gossip between ${npc1} and ${npc2}`);
+      return res.json({ success: true, message: 'Gossip shared successfully' });
     }
     
-    res.json({ shared });
+    return res.json({ success: true, message: 'No new gossip to share' });
   } catch (err) {
-    console.error('Gossip sharing failed:', err);
-    res.status(500).json({ error: err.message });
+    console.error('Gossip share failed:', err);
+    return res.status(500).json({ error: err.message });
   }
 }
 
-module.exports = { handleInteract, handleInteractStream, handleGetGossip, handleGossipShare, handleReset, handleCheckGossip, handleGetProfile };
+module.exports = {
+  handleInteract,
+  handleInteractStream,
+  handleGetGossip,
+  handleGossipShare,
+  handleReset,
+  handleCheckGossip,
+  handleGetProfile
+};
+

@@ -1,11 +1,34 @@
 {
-  "factionRelations": {},
-  "npcRelations": {},
+  "npc": {
+    "bartender-guard": 25,
+    "guard-bartender": 5,
+    "bartender-merchant": 15,
+    "merchant-bartender": -3,
+    "guard-guard2": 35,
+    "guard2-guard": 35,
+    "guard-merchant": 10,
+    "merchant-guard": 10,
+    "helios-merchant": -20,
+    "merchant-helios": -25,
+    "helios-moody_old_man": 5,
+    "moody_old_man-helios": 5,
+    "moody_old_man-bartender": 0,
+    "bartender-moody_old_man": 5,
+    "helios-guard": -30,
+    "guard-helios": -30
+  },
+  "player": {
+    "bartender": 0,
+    "guard": 0,
+    "guard2": 0,
+    "merchant": 0,
+    "helios": 0,
+    "moody_old_man": 0
+  },
   "npcFactions": {
     "guard": "COURT_LOYALISTS",
     "guard2": "COURT_LOYALISTS",
     "merchant": "MARKET_MERCHANTS",
-    "thief": "UNDERWORLD",
     "bartender": "MARKET_MERCHANTS",
     "helios": "UNDERWORLD",
     "moody_old_man": "NEUTRAL"

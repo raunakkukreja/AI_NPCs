@@ -498,7 +498,6 @@ body, html, #root { height: 100%; margin: 0; font-family: Arial, sans-serif; }
   cursor: pointer;
   padding: 6px 8px;
   font-weight: 600;
-  border-radius: 6px;
 }
 /* styles.css */
 .opening-scene-container {
@@ -713,3 +712,29 @@ body, html, #root { height: 100%; margin: 0; font-family: Arial, sans-serif; }
 .weather-test-controls button:hover {
   background: #555;
 }
+
+/* Player sprite (3-frame irregular sheet: (0,0), (500,0), (0,500) ) */
+.player-sprite {
+  width: 64px;              /* visible size */
+  height: 64px;
+  background-image: url('/assets/nico_sprites.png');
+  /* Scale full 1000x1000 sheet so each 500px frame becomes 64px:
+     scale = 64 / 500 = 0.128 → full sheet becomes ~128px */
+  background-size: 128px 128px; 
+  background-position: 0 0;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.player-walking {
+  animation: nicoWalk 0.6s infinite;
+}
+
+@keyframes nicoWalk {
+  0%   { background-position:    0px    0px; }   /* Frame 1 (standing) */
+  33%  { background-position:  -64px    0px; }   /* Frame 2 (right foot) */
+  66%  { background-position:    0px  -64px; }   /* Frame 3 (left foot) */
+  100% { background-position:    0px    0px; }   /* Loop */
+}
+
+
