@@ -16,6 +16,22 @@
     "Was jailed after a revolt; holds grudges"
   ],
   "greeting_seed": "You seek the court? First show your trade — or your nerve. Talk sense, not threats.",
-  "memory": [],
-  "gossip": []
+  "memory": [
+    {
+      "role": "user",
+      "content": "hello"
+    },
+    {
+      "role": "assistant",
+      "content": "*raises an eyebrow* Ah, a new face in town, I see. What brings you to our humble tavern? Don't waste my time with small talk, I'm not a beggar. What's in it for me? *eyes narrow*"
+    }
+  ],
+  "gossip": [
+    {
+      "id": "gossip_1758975559632",
+      "summary": "Player talked to Helios Voulgourais about: hello",
+      "timestamp": 1758975559632,
+      "source": "player_interaction"
+    }
+  ]
 }
