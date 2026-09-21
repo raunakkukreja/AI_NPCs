@@ -13,7 +13,8 @@ function updateSmartBulb(type, data) {
 }
 
 const app = express();
-app.use(cors());
+const ALLOWED_ORIGIN = process.env.FRONTEND_URL || '*';
+app.use(cors({ origin: ALLOWED_ORIGIN }));
 app.use(express.json());
 
 app.post('/api/npc/:id/interact', (req, res) => {
@@ -45,10 +46,8 @@ app.post('/api/bulb/movement', (req, res) => {
 // simple health route
 app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
-// show configured LLM target (for debugging)
-const LOCAL_LLM_URL = process.env.LOCAL_LLM_URL || 'http://127.0.0.1:8000';
-const LOCAL_LLM_API_KEY = process.env.LOCAL_LLM_API_KEY || '';
-console.log(`[CONFIG] LOCAL_LLM_URL=${LOCAL_LLM_URL} LOCAL_LLM_API_KEY=${LOCAL_LLM_API_KEY ? '***' : '(none)'} `);
+// show configured LLM state (for debugging)
+console.log(`[CONFIG] ANTHROPIC_API_KEY=${process.env.ANTHROPIC_API_KEY ? '***' : '(none)'} FRONTEND_URL=${ALLOWED_ORIGIN}`);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Backend listening on ${PORT}`));

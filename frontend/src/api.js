@@ -1,7 +1,9 @@
 // frontend/src/api.js
+const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '');
+
 export async function interact(npcId, text) {
   try {
-    const url = '/api/npc/' + encodeURIComponent(npcId) + '/interact';
+    const url = BACKEND_URL + '/api/npc/' + encodeURIComponent(npcId) + '/interact';
     console.log('API call', url, text);
     const res = await fetch(url, {
       method: 'POST',
@@ -25,7 +27,7 @@ export async function interact(npcId, text) {
 
 export async function interactStream(npcId, text, onChunk) {
   try {
-    const url = '/api/npc/' + encodeURIComponent(npcId) + '/interact/stream';
+    const url = BACKEND_URL + '/api/npc/' + encodeURIComponent(npcId) + '/interact/stream';
     const res = await fetch(url, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
