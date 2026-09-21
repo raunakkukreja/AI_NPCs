@@ -3,6 +3,7 @@ require('dotenv').config(); // optional - install dotenv if you want to use .env
 const express = require('express');
 const cors = require('cors');
 const { handleInteract, handleInteractStream, handleGetGossip, handleGossipShare, handleReset, handleCheckGossip, handleGetProfile } = require('./controllers/interactController');
+const RelationshipMatrix = require('./services/RelationshipMatrix');
 
 const app = express();
 app.use(cors());
@@ -16,13 +17,44 @@ app.get('/api/gossip', handleGetGossip);
 app.post('/api/gossip/share', handleGossipShare);
 app.post('/api/reset', handleReset);
 
+// debug: return the relationships JSON
+app.get('/api/relationships', (req, res) => {
+  try {
+    const data = RelationshipMatrix.getRelationships();
+    return res.json({ ok: true, data });
+  } catch (err) {
+    console.error('failed to get relationships', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Add this route to easily check relationship changes
+app.get('/api/relationships/player', (req, res) => {
+    try {
+        const data = RelationshipMatrix.getRelationships();
+        return res.json({ 
+            ok: true, 
+            relationships: data.player 
+        });
+    } catch (err) {
+        console.error('Failed to get player relationships', err);
+        return res.status(500).json({ ok: false, error: err.message });
+    }
+});
+
 // simple health route
 app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
 // show configured LLM target (for debugging)
 const LOCAL_LLM_URL = process.env.LOCAL_LLM_URL || 'http://127.0.0.1:8000';
 const LOCAL_LLM_API_KEY = process.env.LOCAL_LLM_API_KEY || '';
-console.log(`[CONFIG] LOCAL_LLM_URL=${LOCAL_LLM_URL} LOCAL_LLM_API_KEY=${LOCAL_LLM_API_KEY ? '***' : '(none)'} `);
+console.log(`[CONFIG] LOCAL_LLM_URL=${LOCAL_LLM_URL} LOCAL_LLM_API_KEY=${LOCAL_LLM_API_KEY ? '***' : '(none)'} ` );
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Backend listening on ${PORT}`));
+
+async function initializeServer() {
+    app.listen(PORT, () => console.log(`Backend listening on ${PORT}`));
+    await RelationshipMatrix.initialize();
+}
+
+initializeServer();

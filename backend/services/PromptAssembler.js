@@ -3,50 +3,98 @@ const RelationshipMatrix = require('./RelationshipMatrix');
 function assemble(npc, gameState, recentMem, gossip, playerText) {
   const relationships = RelationshipMatrix.getNPCRelationships(npc.id);
   const npcFaction = RelationshipMatrix.getNPCFaction(npc.id);
+  const playerRelation = RelationshipMatrix.getPlayerRelationship(npc.id);
   
   const relationshipContext = Object.entries(relationships)
     .map(([targetId, score]) => {
-      let sentiment = 'neutral towards';
-      if (score <= -30) sentiment = 'strongly dislikes';
-      else if (score < 0) sentiment = 'dislikes';
-      else if (score >= 30) sentiment = 'strongly likes';
-      else if (score > 0) sentiment = 'likes';
-      
-      return `You ${sentiment} ${targetId}`;
+        let sentiment = 'neutral towards';
+        let description = '';
+        
+        if (score <= -30) {
+            sentiment = 'strongly dislikes';
+            description = 'speak with clear disdain about';
+        } else if (score < 0) {
+            sentiment = 'dislikes';
+            description = 'speak negatively about';
+        } else if (score >= 30) {
+            sentiment = 'strongly likes';
+            description = 'speak very warmly about';
+        } else if (score > 0) {
+            sentiment = 'likes';
+            description = 'speak positively about';
+        }
+        
+        return `You ${sentiment} ${targetId}. When discussing ${targetId}, you should ${description} them.`;
     })
     .join('. ');
 
   const memText = (recentMem || []).map(m => `- ${m.text}`).join('\\n') || 'No recent memories.';
   const gossipText = (gossip || []).map(g => `- ${g.text}`).join('\\n') || 'No gossip nearby.';
 
-  // Add to existing system prompt
-  const system = [
-    `You are ${npc.name}, ${npc.role}.`,
-    `You belong to the ${npcFaction} faction.`,
-    `Relationships: ${relationshipContext}`,
-    `Personality: ${npc.personality}.`,
-    `Goals: ${npc.goals.join(', ') || 'none'}.`,
-    `Core knowledge: ${npc.knowledge ? npc.knowledge.join('; ') : 'none'}.`,
-    '',
-    'You must ALWAYS output valid JSON only, with keys: dialogue (string), action (object|null), metadata (object).',
-    'Do not output any extra commentary or explanation outside the JSON.',
-    '',
-    'Safety rules: refuse to help the player with real-world illegal activity, exploitation, or anything that would enable cheats in this demo. If refusing, output dialogue that politely refuses and set action=null.',
-    ''
-  ].join('\\n');
+  // Enhanced player relationship context
+  let playerContext = '';
+  if (playerRelation <= -30) {
+      playerContext = 'You strongly distrust the player and are hostile';
+  } else if (playerRelation <= -10) {
+      playerContext = 'You are wary and suspicious of the player';
+  } else if (playerRelation >= 30) {
+      playerContext = 'You consider the player a trusted friend';
+  } else if (playerRelation >= 10) {
+      playerContext = 'You are friendly and open with the player';
+  } else {
+      playerContext = 'You are neutral towards the player';
+  }
 
-  const prompt = [
-    system,
-    `Game state: time=${gameState.time}, weather=${gameState.weather}, location=${gameState.location}.`,
-    `Recent memories:\\n${memText}`,
-    `Gossip:\\n${gossipText}`,
-    `Player says: "${playerText}"`,
-    '',
-    'Respond now.'
-  ].join('\\n\\n');
+  const systemPrompt = [
+      `You are ${npc.name}. ${npc.personality || ''}`,
+      `Current relationship with player: ${playerContext}`,
+      `Your relationships with others: ${relationshipContext}`,
+      `Recent memories: ${memText}`,
+      `Recent gossip: ${gossipText}`,
+      `Respond based on these relationship dynamics.`
+  ].join('\n');
 
-  // For the local mock LLM we will simply return a small object; for real LLM we send `prompt`.
-  return prompt;
+  return systemPrompt;
 }
 
-module.exports = { assemble };
+class PlanGenerator {
+    generatePlan(npc, target, relationships) {
+        const npcGoals = npc.goals;
+        const relationshipScore = relationships[target];
+        const factionTension = getFactionTension(npc, target);
+        
+        // Generate plan based on these factors
+        return {
+            type: relationshipScore < 0 ? 'sabotage' : 'cooperation',
+            description: '', // AI generated plan
+            requirements: [],
+            risks: []
+        };
+    }
+}
+
+// Need to modify in PromptAssembler.js
+function processGossip(gossip, sourceNpc, targetNpc) {
+    const relationship = RelationshipMatrix.getNPCRelation(sourceNpc, targetNpc);
+    
+    let credibilityContext = '';
+    if (relationship <= -20) {
+        credibilityContext = `(You are skeptical of this gossip since it comes from ${sourceNpc}, whom you distrust)`;
+    } else if (relationship >= 20) {
+        credibilityContext = `(You take this seriously since it comes from ${sourceNpc}, whom you trust)`;
+    }
+    
+    return `${gossip} ${credibilityContext}`;
+}
+
+// Add to PromptAssembler.js
+function getAvailableDialogueOptions(playerRelation) {
+    if (playerRelation >= 30) {
+        return ['Share secrets', 'Ask for help', 'Personal conversation'];
+    } else if (playerRelation <= -20) {
+        return ['Basic interaction', 'Try to improve relationship'];
+    }
+    return ['Standard dialogue options'];
+}
+
+module.exports = { assemble, PlanGenerator, processGossip, getAvailableDialogueOptions };
