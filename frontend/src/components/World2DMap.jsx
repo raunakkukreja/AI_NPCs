@@ -104,7 +104,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
 
   // Load map coordinates
   useEffect(() => {
-    fetch('map_coordinates.json')
+    fetch('/map_coordinates.json')
       .then(res => res.json())
       .then(data => setMapCoordinates(data))
       .catch(err => console.error('Failed to load map coordinates:', err));
@@ -126,150 +126,70 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
     loadGossip();
   }, []);
 
-  // Audio initialization
+  // Audio initialization - runs ONCE on mount. Creating a fresh Audio object
+  // on every mute toggle (the previous behavior, keyed on [musicOn]) restarted
+  // the track from 0 each click and leaked a window listener every time,
+  // since the cleanup removed a different function reference than the one
+  // that was added.
   useEffect(() => {
-    console.log("[Audio-Debug] Component mounted, starting audio setup");
     const a = audioRef.current;
 
     try {
       a.bg = new Audio("/assets/bg_loop.mp3");
       a.bg.addEventListener('ended', () => {
-        console.log("[Audio-Debug] BG music ended, restarting");
         a.bg.currentTime = 0;
-        a.bg.play().catch(err => console.warn("[Audio-Debug] BG loop failed:", err));
+        a.bg.play().catch(err => console.warn("[Audio] BG loop failed:", err));
       });
       a.bg.loop = true;
       a.bg.volume = 0.5;
-      console.log("[Audio-Debug] BG music setup complete");
-    } catch(err) {
-      console.error("[Audio-Error] Audio initialization failed:", err);
-    }
 
-    const audioStates = { bg: false, interact: false, step: false };
-
-    try {
-      console.log("[Audio-Debug] Creating audio objects...");
       a.sfxInteract = new Audio("/assets/sfx_interact.mp3");
-      a.sfxInteract.addEventListener('canplaythrough', () => {
-        console.log("[Audio-Debug] Interact sound loaded");
-        audioStates.interact = true;
-      });
-
       a.sfxStep = new Audio("/assets/sfx_step.mp3");
-      a.sfxStep.addEventListener('canplaythrough', () => {
-        console.log("[Audio-Debug] Step sound loaded");
-        audioStates.step = true;
-      });
 
-      // Respect saved music preference when audio is ready
-      const applySavedMusicPref = () => {
-        const pref = (() => {
-          try { return localStorage.getItem('musicOn'); } catch (e) { return null; }
-        })();
-        const wantMusic = pref === null ? musicOn : (pref === 'true');
-        console.log("[Audio-Debug] Applying saved music preference:", wantMusic);
-        if (!wantMusic) {
-          if (a.bg) {
-            try {
-              a.bg.pause();
-              console.log("[Audio-Debug] BG paused due to saved preference");
-            } catch (e) { console.warn("[Audio-Debug] Pause failed:", e); }
-          }
-        } else {
-          // do not force play if browser blocks autoplay; startAudio user gesture will attempt play
-          console.log("[Audio-Debug] musicOn=true (will attempt autoplay on user gesture)");
-        }
-      };
+      // Respect saved preference before any user gesture happens
+      const pref = (() => {
+        try { return localStorage.getItem('musicOn'); } catch (e) { return null; }
+      })();
+      if (pref === 'false') {
+        a.bg.pause();
+      }
 
-      // Attach small timeout to apply pref after objects created
-      setTimeout(applySavedMusicPref, 120);
-
-      // Start audio on user interaction
+      // Browsers require a user gesture before audio can play - unlock once.
       const startAudio = () => {
-        console.log("[Audio-Debug] User interaction detected, attempting to start audio");
-        if (a.audioStarted) {
-          console.log("[Audio-Debug] Audio already started, skipping");
-          return;
-        }
-
+        if (a.audioStarted) return;
         const wantMusic = (() => {
-          try { return localStorage.getItem('musicOn') !== 'false'; } catch (e) { return musicOn; }
+          try { return localStorage.getItem('musicOn') !== 'false'; } catch (e) { return true; }
         })();
-
-        const tries = [];
-        if (wantMusic && a.bg) {
-          tries.push(a.bg.play().then(() => console.log("[Audio-Debug] BG play succeeded")).catch(e => console.warn("[Audio-Debug] BG autoplay failed:", e)));
-        } else {
-          console.log("[Audio-Debug] Not attempting BG play (music disabled)");
+        if (wantMusic) {
+          a.bg.play().catch(e => console.warn("[Audio] BG autoplay failed:", e));
         }
-
-        // test other sounds without leaving them playing
-        tries.push(a.sfxStep.play().then(() => { a.sfxStep.pause(); console.log("[Audio-Debug] Step sound test successful"); }).catch(e => console.warn("[Audio-Debug] Step sound test failed:", e)));
-        tries.push(a.sfxInteract.play().then(() => { a.sfxInteract.pause(); console.log("[Audio-Debug] Interact sound test successful"); }).catch(e => console.warn("[Audio-Debug] Interact sound test failed:", e)));
-
-        Promise.allSettled(tries).then(() => {
-          console.log("[Audio-Debug] Audio initialization attempts completed");
-          a.audioStarted = true;
-        });
+        a.audioStarted = true;
       };
 
       window.addEventListener('click', startAudio);
       window.addEventListener('keydown', startAudio);
-      console.log("[Audio-Debug] Added user interaction listeners");
 
-    } catch(err) {
+      return () => {
+        window.removeEventListener('click', startAudio);
+        window.removeEventListener('keydown', startAudio);
+        a.bg.pause();
+      };
+    } catch (err) {
       console.error("[Audio-Error] Audio initialization failed:", err);
     }
+  }, []);
 
-    const debugInterval = setInterval(() => {
-      console.log("[Audio-Status]", {
-        bgExists: !!a.bg,
-        bgPlaying: !!a.bg && a.bg.paused === false,
-        interactExists: !!a.sfxInteract,
-        stepExists: !!a.sfxStep,
-        audioStarted: a.audioStarted,
-        musicOnSetting: (() => { try { return localStorage.getItem('musicOn'); } catch(e){ return 'err'; } })()
-      });
-    }, 5000);
-
-    return () => {
-      console.log("[Audio-Debug] Cleaning up audio resources");
-      clearInterval(debugInterval);
-      window.removeEventListener('click', () => {});
-      window.removeEventListener('keydown', () => {});
-      if (a.bg) {
-        a.bg.pause();
-        console.log("[Audio-Debug] BG music stopped");
-      }
-    };
-  }, [musicOn]);
-
-  // Keep audio state in sync when musicOn toggles
+  // Play/pause the (already-created) background track when the user toggles music
   useEffect(() => {
-    console.log("[Audio-Debug] musicOn changed ->", musicOn);
     try {
       localStorage.setItem('musicOn', musicOn ? 'true' : 'false');
-    } catch (e) {
-      console.warn("[Audio-Debug] Could not persist musicOn:", e);
-    }
+    } catch (e) {}
     const a = audioRef.current;
-    if (a && a.bg) {
-      if (musicOn) {
-        a.bg.play().then(() => {
-          console.log("[Audio-Debug] BG play successful after toggle");
-        }).catch(err => {
-          console.warn("[Audio-Debug] BG play failed after toggle:", err);
-        });
-      } else {
-        try {
-          a.bg.pause();
-          console.log("[Audio-Debug] BG paused after toggle");
-        } catch (e) {
-          console.warn("[Audio-Debug] Pause failed after toggle:", e);
-        }
-      }
+    if (!a.bg) return;
+    if (musicOn) {
+      a.bg.play().catch(err => console.warn("[Audio] BG play failed after toggle:", err));
     } else {
-      console.log("[Audio-Debug] audioRef.bg not ready yet, saved preference will be applied when ready");
+      a.bg.pause();
     }
   }, [musicOn]);
 
@@ -597,7 +517,7 @@ export default function World2DMap({ onTalkRequest, pausedNPCId, playerInteracti
       }}>
         {/* Map background */}
         <img
-          src="map.jpg"
+          src="/map.jpg"
           alt="Map"
           style={{
             position: "relative",
